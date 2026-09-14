@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Purchase Ledger 300 Limited</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<style>
+  :root{
+    --primary:#1E3A8A; --primary-dark:#0B2159; --primary-light:#3D5FD1;
+    --secondary:#0D9488; --gold:#B8873A; --gold-dark:#8F6423;
+    --on-surface:#101828; --on-surface-var:#586279; --outline:rgba(16,33,89,.15);
+    --error:#B3261E; --error-container:#F9DEDC; --success:#166A3E; --success-container:#D9F0DF;
+    --glass-bg:rgba(255,255,255,.6); --glass-border:rgba(255,255,255,.75);
+    --elev1: 0 1px 1px rgba(11,33,89,.05), 0 10px 26px rgba(11,33,89,.14), inset 0 1px 0 rgba(255,255,255,.55);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh; color:var(--on-surface); font-family:'Roboto',sans-serif;
+    background:linear-gradient(165deg, #F2F5FC 0%, #E7ECF8 38%, #DCE3F4 72%, #D3DCF1 100%);
+    background-attachment:fixed;
+  }
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-size:20px;vertical-align:middle;line-height:1;}
+  .appbar{
+    background:linear-gradient(120deg, var(--primary-light) 0%, var(--primary) 46%, var(--primary-dark) 100%);
+    color:#fff; padding:22px 48px; display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;
+    border-bottom:1px solid rgba(184,135,58,.55);
+  }
+  .appbar-eyebrow{font-size:11.5px;letter-spacing:.08em;opacity:.85;font-weight:500;color:#E8CE9C;}
+  .appbar h1{margin:0;font-size:22px;font-weight:700;}
+  .appbar-right{display:flex;align-items:center;gap:10px;}
+  .icon-btn{
+    width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.28);
+    background:rgba(255,255,255,.14);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+  }
+  .icon-btn:hover{background:rgba(255,255,255,.26);}
+  .wrap{max-width:820px;margin:0 auto;padding:40px 24px 100px;}
+  .card{
+    background:var(--glass-bg); backdrop-filter:blur(20px) saturate(180%); -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border:1px solid var(--glass-border); border-radius:22px; box-shadow:var(--elev1); padding:28px 30px; margin-bottom:24px;
+  }
+  .card h2{margin:0 0 6px;font-size:17px;display:flex;align-items:center;gap:8px;}
+  .card h2 .material-symbols-outlined{color:var(--primary);}
+  .card p.desc{margin:0 0 20px;font-size:12.8px;color:var(--on-surface-var);}
+  .drop{
+    border:2px dashed var(--outline); border-radius:16px; padding:36px 20px; text-align:center;
+    cursor:pointer; transition:background .15s, border-color .15s;
+  }
+  .drop:hover, .drop.dragover{background:rgba(255,255,255,.5);border-color:var(--primary);}
+  .drop .material-symbols-outlined{font-size:34px;color:var(--primary);opacity:.7;}
+  .drop .t1{font-size:14px;font-weight:600;margin-top:8px;}
+  .drop .t2{font-size:12px;color:var(--on-surface-var);margin-top:2px;}
+  #fileInput{display:none;}
+  .btn{
+    display:inline-flex;align-items:center;gap:6px;font-weight:500;font-size:13.5px;
+    padding:11px 22px;border-radius:100px;border:none;cursor:pointer;
+  }
+  .btn-filled{background:linear-gradient(160deg, var(--secondary) 0%, #0B7A70 100%);color:#fff;box-shadow:0 8px 20px rgba(13,148,136,.4);}
+  .btn-filled:disabled{opacity:.5;cursor:default;}
+  .btn-text{background:rgba(255,255,255,.5);color:var(--primary-dark);border:1px solid var(--glass-border);}
+  .status{margin-top:16px;font-size:12.8px;padding:12px 16px;border-radius:12px;display:none;}
+  .status.show{display:block;}
+  .status.ok{background:var(--success-container);color:var(--success);}
+  .status.err{background:var(--error-container);color:var(--error);}
+  .status.info{background:rgba(30,58,138,.08);color:var(--primary-dark);}
+  table{width:100%;border-collapse:collapse;font-size:12.8px;margin-top:10px;}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--outline);}
+  th{color:var(--on-surface-var);font-size:11px;font-weight:700;}
+  .current-info{font-size:13px;line-height:1.9;}
+  .current-info b{color:var(--primary-dark);}
+</style>
+</head>
+<body>
+
+<div class="appbar">
+  <div>
+    <div class="appbar-eyebrow">300 LIMITED · ADMIN</div>
+    <h1>Data Upload</h1>
+  </div>
+  <div class="appbar-right">
+    <a href="/dashboard" class="icon-btn" title="View dashboard"><span class="material-symbols-outlined">dashboard</span></a>
+    <button class="icon-btn" id="logoutBtn" title="Logout"><span class="material-symbols-outlined">logout</span></button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2><span class="material-symbols-outlined">database</span>Current published data</h2>
+    <p class="desc">This is what everyone currently sees on the dashboard.</p>
+    <div class="current-info" id="currentInfo">Loading…</div>
+  </div>
+
+  <div class="card">
+    <h2><span class="material-symbols-outlined">file_upload</span>Upload new Excel file</h2>
+    <p class="desc">Same format as before: a sheet (ideally named "Report") with Date, Supplier, Item, Qty, Rate, UOM, Amount columns. This will replace the currently published dataset for everyone.</p>
+    <div class="drop" id="dropZone">
+      <span class="material-symbols-outlined">cloud_upload</span>
+      <div class="t1">Click to choose a file, or drag & drop</div>
+      <div class="t2">.xlsx or .xls</div>
+    </div>
+    <input type="file" id="fileInput" accept=".xlsx,.xls">
+    <div style="display:flex;gap:10px;align-items:center;margin-top:18px;">
+      <button class="btn btn-filled" id="publishBtn" disabled>
+        <span class="material-symbols-outlined" style="font-size:17px;">publish</span>
+        Publish to dashboard
+      </button>
+      <span id="selectedFileName" style="font-size:12.5px;color:var(--on-surface-var);"></span>
+    </div>
+    <div class="status" id="status"></div>
+    <div id="previewWrap" style="display:none;">
+      <p class="desc" style="margin-top:18px;">Preview (first 5 rows of <span id="previewCount"></span> parsed):</p>
+      <table id="previewTable"></table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ---------- auth guard ---------- */
+let parsedRecords = null, parsedFileName = null;
+
+async function requireAdmin(){
+  try{
+    const res = await fetch('/api/me');
+    if(!res.ok){ window.location.href = '/'; return null; }
+    const me = await res.json();
+    if(me.role !== 'admin'){ window.location.href = '/dashboard'; return null; }
+    return me;
+  }catch(e){ window.location.href = '/'; return null; }
+}
+
+async function loadCurrentInfo(){
+  const el = document.getElementById('currentInfo');
+  try{
+    const res = await fetch('/api/data');
+    const json = await res.json();
+    if(json.records && json.records.length){
+      const when = json.uploadedAt ? new Date(json.uploadedAt).toLocaleString() : 'unknown';
+      el.innerHTML = `<b>${json.fileName || 'Unnamed file'}</b><br>${json.records.length.toLocaleString()} rows · uploaded ${when}${json.uploadedBy ? ' by ' + json.uploadedBy : ''}`;
+    } else {
+      el.textContent = 'No data has been published yet.';
+    }
+  }catch(e){
+    el.textContent = 'Could not load current data status.';
+  }
+}
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await fetch('/api/logout', {method:'POST'});
+  window.location.href = '/';
+});
+
+/* ---------- excel parsing (same logic as dashboard) ---------- */
+function normalizeHeader(h){ return String(h||'').trim().toLowerCase(); }
+
+function excelSerialToDate(serial){
+  const utcDays = Math.floor(serial - 25569);
+  const utcValue = utcDays * 86400;
+  return new Date(utcValue * 1000);
+}
+
+function parseDateCell(val){
+  if(val instanceof Date && !isNaN(val)) return val;
+  if(typeof val === 'number') return excelSerialToDate(val);
+  if(typeof val === 'string'){
+    const s = val.trim();
+    const m = s.match(/^(\d{1,2})[-\/ ]([A-Za-z]{3,})[-\/ ](\d{4})$/);
+    if(m){
+      const months = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+      const mo = months[m[2].slice(0,3).toLowerCase()];
+      if(mo !== undefined) return new Date(Date.UTC(parseInt(m[3]), mo, parseInt(m[1])));
+    }
+    const generic = new Date(s);
+    if(!isNaN(generic)) return generic;
+  }
+  return null;
+}
+
+function toYMD(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function parseWorkbook(wb){
+  const sheetName = wb.SheetNames.includes('Report') ? 'Report' : wb.SheetNames[0];
+  const ws = wb.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
+  if(!rows.length) throw new Error('Sheet is empty.');
+
+  const header = rows[0].map(normalizeHeader);
+  const idx = {
+    date: header.findIndex(h => h === 'date'),
+    supplier: header.findIndex(h => h.includes('supplier')),
+    item: header.findIndex(h => h.includes('item')),
+    qty: header.findIndex(h => h.includes('qty') || h.includes('quantity')),
+    rate: header.findIndex(h => h === 'rate' || h.includes('rate')),
+    uom: header.findIndex(h => h === 'uom' || h.includes('unit')),
+    amount: header.findIndex(h => h.includes('amount')),
+  };
+  const missing = Object.entries(idx).filter(([k,v]) => v === -1 && k !== 'uom');
+  if(missing.length) throw new Error('Missing expected column(s): ' + missing.map(m=>m[0]).join(', '));
+
+  const records = [];
+  for(let i=1;i<rows.length;i++){
+    const row = rows[i];
+    if(!row || !row.length) continue;
+    const rawDate = row[idx.date];
+    if(rawDate === null || rawDate === undefined) continue;
+    if(typeof rawDate === 'string' && rawDate.trim().toLowerCase() === 'total') continue;
+    const d = parseDateCell(rawDate);
+    if(!d) continue;
+
+    const item = row[idx.item];
+    if(!item) continue;
+    const qty = row[idx.qty] !== null && row[idx.qty] !== undefined ? parseFloat(row[idx.qty]) : null;
+    const rate = row[idx.rate] !== null && row[idx.rate] !== undefined ? parseFloat(row[idx.rate]) : null;
+    let amount = idx.amount !== -1 && row[idx.amount] !== null && row[idx.amount] !== undefined ? parseFloat(row[idx.amount]) : null;
+    if(amount === null && qty !== null && rate !== null) amount = qty * rate;
+    if(amount === null || isNaN(amount)) continue;
+
+    records.push({
+      date: toYMD(d),
+      supplier: idx.supplier !== -1 ? (row[idx.supplier] || 'Unknown') : 'Unknown',
+      item: item,
+      qty: isNaN(qty) ? null : qty,
+      rate: isNaN(rate) ? null : rate,
+      uom: idx.uom !== -1 ? (row[idx.uom] || '') : '',
+      amount: amount
+    });
+  }
+  if(!records.length) throw new Error('No valid data rows found in this file.');
+  return records;
+}
+
+function showStatus(kind, text){
+  const el = document.getElementById('status');
+  el.className = 'status show ' + kind;
+  el.textContent = text;
+}
+
+function renderPreview(records){
+  const wrap = document.getElementById('previewWrap');
+  const table = document.getElementById('previewTable');
+  document.getElementById('previewCount').textContent = records.length.toLocaleString();
+  const rows = records.slice(0,5);
+  table.innerHTML = '<thead><tr><th>Date</th><th>Supplier</th><th>Item</th><th>Qty</th><th>Rate</th><th>UOM</th><th>Amount</th></tr></thead>' +
+    '<tbody>' + rows.map(r => `<tr><td>${r.date}</td><td>${r.supplier}</td><td>${r.item}</td><td>${r.qty ?? ''}</td><td>${r.rate ?? ''}</td><td>${r.uom}</td><td>${r.amount}</td></tr>`).join('') + '</tbody>';
+  wrap.style.display = 'block';
+}
+
+function handleFile(file){
+  document.getElementById('selectedFileName').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    try{
+      const data = new Uint8Array(evt.target.result);
+      const wb = XLSX.read(data, {type:'array', cellDates:true});
+      parsedRecords = parseWorkbook(wb);
+      parsedFileName = file.name;
+      document.getElementById('publishBtn').disabled = false;
+      showStatus('info', `Parsed ${parsedRecords.length.toLocaleString()} rows. Review the preview below, then click "Publish to dashboard".`);
+      renderPreview(parsedRecords);
+    }catch(err){
+      parsedRecords = null;
+      document.getElementById('publishBtn').disabled = true;
+      showStatus('err', 'Could not read file: ' + err.message);
+    }
+  };
+  reader.onerror = function(){ showStatus('err', 'Failed to read the file.'); };
+  reader.readAsArrayBuffer(file);
+}
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => { if(e.target.files[0]) handleFile(e.target.files[0]); });
+['dragenter','dragover'].forEach(evt => dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.add('dragover'); }));
+['dragleave','drop'].forEach(evt => dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.remove('dragover'); }));
+dropZone.addEventListener('drop', e => { if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+document.getElementById('publishBtn').addEventListener('click', async () => {
+  if(!parsedRecords) return;
+  const btn = document.getElementById('publishBtn');
+  btn.disabled = true;
+  showStatus('info', 'Publishing…');
+  try{
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ records: parsedRecords, fileName: parsedFileName })
+    });
+    const json = await res.json();
+    if(!res.ok) throw new Error(json.error || 'Upload failed');
+    showStatus('ok', `Published successfully: ${json.rows.toLocaleString()} rows are now live on the dashboard.`);
+    loadCurrentInfo();
+  }catch(err){
+    showStatus('err', err.message);
+  }finally{
+    btn.disabled = false;
+  }
+});
+
+/* ---------- init ---------- */
+(async function init(){
+  const me = await requireAdmin();
+  if(!me) return;
+  loadCurrentInfo();
+})();
+</script>
+</body>
+</html>
