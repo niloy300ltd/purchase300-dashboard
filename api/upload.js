@@ -9,10 +9,18 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const user = getUser(req);
-  if (!user || user.role !== 'admin') {
-    res.status(403).json({ error: 'Admin access required' });
-    return;
+  // Allow automated uploads via secret key, bypassing session login
+  const uploadKey = req.headers['x-upload-key'];
+  const isKeyAuth = uploadKey && process.env.UPLOAD_API_KEY && uploadKey === process.env.UPLOAD_API_KEY;
+
+  let uploadedBy = 'automation';
+  if (!isKeyAuth) {
+    const user = getUser(req);
+    if (!user || user.role !== 'admin') {
+      res.status(403).json({ error: 'Admin access required' });
+      return;
+    }
+    uploadedBy = user.username;
   }
 
   const body = req.body || {};
@@ -28,7 +36,7 @@ module.exports = async (req, res) => {
     records,
     fileName,
     uploadedAt: new Date().toISOString(),
-    uploadedBy: user.username,
+    uploadedBy,
   };
 
   try {
