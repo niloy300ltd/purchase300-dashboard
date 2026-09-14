@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Purchase Ledger — 300 Limited</title>
+<script>
+  (function(){
+    try{
+      var saved = localStorage.getItem('purchaseLedgerTheme');
+      var theme = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      if(theme === 'dark') document.documentElement.setAttribute('data-theme','dark');
+    }catch(e){}
+  })();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.32.0/plotly.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -28,6 +37,12 @@
     --error-container:#FDECEC;
     --success:#26B87A;
     --success-container:#E5F8EF;
+    --page-bg:#F6F8FC;
+    --surface:#FFFFFF;
+    --surface-soft:#F6F8FC;
+    --surface-softer:#FBFCFE;
+    --table-head-bg:#FAFBFD;
+    --select-arrow:%238A93A6;
     --glass-bg:#FFFFFF;
     --glass-bg-strong:#FFFFFF;
     --glass-border:#EEF1F6;
@@ -37,30 +52,62 @@
     --radius-lg:20px;
     --radius-md:16px;
   }
+  html[data-theme="dark"]{
+    --primary:#5B8DEF;
+    --primary-dark:#7BA3F5;
+    --primary-light:#8FB3FF;
+    --primary-container:rgba(91,141,239,.18);
+    --on-primary:#0B0F19;
+    --secondary:#FFB84D;
+    --secondary-container:rgba(255,184,77,.16);
+    --gold:#FFB84D;
+    --gold-dark:#FFC876;
+    --gold-container:rgba(255,184,77,.16);
+    --on-surface:#EDEFF7;
+    --on-surface-var:#98A2BE;
+    --outline:rgba(255,255,255,.09);
+    --outline-soft:rgba(255,255,255,.05);
+    --error:#F1786F;
+    --error-container:rgba(241,120,111,.16);
+    --success:#3FD394;
+    --success-container:rgba(63,211,148,.14);
+    --page-bg:#0A0E1A;
+    --surface:#141A2E;
+    --surface-soft:#1A2138;
+    --surface-softer:#111629;
+    --table-head-bg:#171E36;
+    --select-arrow:%2398A2BE;
+    --elev1: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    --elev2: 0 2px 4px rgba(0,0,0,.35), 0 20px 44px rgba(0,0,0,.45);
+    --elev-press: inset 0 2px 6px rgba(0,0,0,.4);
+  }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
+  html{transition:background .25s ease;}
   body{
     min-height:100vh;
     color:var(--on-surface);
     font-family:'Inter',sans-serif;
     -webkit-font-smoothing:antialiased;
-    background:#F6F8FC;
+    background:var(--page-bg);
     background-attachment:fixed;
+    transition:background .25s ease, color .25s ease;
   }
   .material-symbols-outlined{
     font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
     font-size:20px; vertical-align:middle; line-height:1;
   }
 
-  /* APP BAR — clean white header, like a SaaS product bar */
+  /* APP BAR — clean header, like a SaaS product bar */
   .appbar{
-    background:#FFFFFF;
+    background:var(--surface);
     color:var(--on-surface);
     box-shadow:0 1px 0 var(--outline), 0 6px 20px rgba(20,30,60,.04);
     padding:20px 48px;
     display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;
     position:sticky;top:0;z-index:50;
     border-bottom:1px solid var(--outline);
+    transition:background .25s ease, border-color .25s ease;
   }
   .appbar-title{display:flex;flex-direction:column;gap:3px;}
   .appbar-eyebrow{font-size:11.5px;letter-spacing:.08em;opacity:.85;font-weight:600;color:var(--primary);}
@@ -68,11 +115,26 @@
   .appbar-meta{font-size:12px;color:var(--on-surface-var);display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
   .appbar-meta span{display:flex;align-items:center;gap:4px;}
 
+  /* THEME TOGGLE */
+  .theme-toggle{
+    width:34px;height:34px;border-radius:50%;border:1px solid var(--outline);
+    background:var(--surface-soft);color:var(--on-surface-var);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;
+    transition:background .15s ease, color .15s ease, transform .12s ease;
+  }
+  .theme-toggle:hover{background:var(--primary-container);color:var(--primary);}
+  .theme-toggle:active{transform:scale(.92);}
+  .theme-toggle .material-symbols-outlined{font-size:19px;position:absolute;transition:opacity .25s ease, transform .35s ease;}
+  .theme-toggle .icon-sun{opacity:0;transform:rotate(-60deg) scale(.4);}
+  .theme-toggle .icon-moon{opacity:1;transform:rotate(0) scale(1);}
+  html[data-theme="dark"] .theme-toggle .icon-sun{opacity:1;transform:rotate(0) scale(1);}
+  html[data-theme="dark"] .theme-toggle .icon-moon{opacity:0;transform:rotate(60deg) scale(.4);}
+
   /* SETTINGS ICON + DROPDOWN */
   .settings-wrap{position:relative;}
   .icon-btn{
     width:34px;height:34px;border-radius:50%;border:1px solid var(--outline);
-    background:#F6F8FC;color:var(--on-surface-var);cursor:pointer;
+    background:var(--surface-soft);color:var(--on-surface-var);cursor:pointer;
     display:flex;align-items:center;justify-content:center;
     transition:background .15s ease, transform .12s ease, color .15s ease;
   }
@@ -81,12 +143,12 @@
   .icon-btn .material-symbols-outlined{font-size:19px;}
   .settings-panel{
     position:absolute;top:calc(100% + 10px);right:0;min-width:260px;
-    background:#FFFFFF;
+    background:var(--surface);
     border:1px solid var(--outline);border-radius:14px;
     box-shadow:var(--elev2);
     padding:14px 16px;color:var(--on-surface);
     opacity:0;visibility:hidden;transform:translateY(-6px);
-    transition:opacity .15s ease, transform .15s ease, visibility .15s;
+    transition:opacity .15s ease, transform .15s ease, visibility .15s, background .25s ease;
     z-index:60;
   }
   .settings-panel.open{opacity:1;visibility:visible;transform:translateY(0);}
@@ -112,26 +174,26 @@
   }
   .btn-filled:hover{background:var(--primary-dark);transform:translateY(-1px);}
   .btn-filled:active{transform:translateY(0);box-shadow:var(--elev-press);}
-  .btn-text{background:#F6F8FC;color:var(--on-surface);border:1px solid var(--outline);}
+  .btn-text{background:var(--surface-soft);color:var(--on-surface);border:1px solid var(--outline);}
   .btn-text:hover{background:var(--primary-container);color:var(--primary);}
   .btn-gold{
     background:var(--gold);
-    color:#fff;
+    color:#1B2233;
     box-shadow:0 8px 18px rgba(245,166,35,.3);
   }
   .btn-gold:hover{background:var(--gold-dark);transform:translateY(-1px);}
   .btn-gold.active{background:var(--gold-dark);box-shadow:var(--elev-press);}
   .btn:disabled{opacity:.5;cursor:default;}
 
-  /* CARDS — flat white, soft shadow, no blur */
+  /* CARDS — flat surface, soft shadow, no blur */
   .card{
     position:relative;
-    background:#FFFFFF;
+    background:var(--surface);
     border:1px solid var(--outline);
     border-radius:var(--radius-lg);
     box-shadow:var(--elev1);
     padding:22px 28px;
-    transition:box-shadow .2s ease;
+    transition:box-shadow .2s ease, background .25s ease, border-color .25s ease;
   }
   .card-flush{padding:0;overflow:hidden;}
 
@@ -157,13 +219,13 @@
   }
   .kpi-card{
     position:relative;
-    background:#FFFFFF;
+    background:var(--surface);
     border:1px solid var(--outline);
     border-radius:var(--radius-md);
     box-shadow:var(--elev1);
     padding:15px 16px 13px;display:flex;flex-direction:column;gap:8px;
     min-width:0;overflow:hidden;
-    transition:box-shadow .18s ease, transform .18s ease;
+    transition:box-shadow .18s ease, transform .18s ease, background .25s ease, border-color .25s ease;
   }
   .kpi-card:hover{box-shadow:var(--elev2);transform:translateY(-2px);}
   .kpi-card .icon-row{display:flex;justify-content:space-between;align-items:center;}
@@ -185,7 +247,7 @@
   .mover-content:active{cursor:grabbing;}
   .mover-nav{
     flex-shrink:0;width:20px;height:20px;border-radius:50%;border:1px solid var(--outline);cursor:pointer;padding:0;
-    background:#F6F8FC;
+    background:var(--surface-soft);
     display:flex;align-items:center;justify-content:center;color:var(--on-surface-var);
     transition:background .15s ease, transform .1s ease, color .15s ease;
   }
@@ -212,7 +274,7 @@
   .four-col{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
 
   /* SEGMENTED TOGGLE */
-  .segmented{display:inline-flex;border:1px solid var(--outline);border-radius:100px;overflow:hidden;background:#F6F8FC;}
+  .segmented{display:inline-flex;border:1px solid var(--outline);border-radius:100px;overflow:hidden;background:var(--surface-soft);}
   .segmented button{
     padding:9px 17px;font-size:12.5px;font-weight:600;border:none;background:transparent;
     color:var(--on-surface-var);cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s ease,color .15s ease;
@@ -235,7 +297,7 @@
   .field.icon-field input{padding-left:38px;}
   select, input[type=text], input[type=date]{
     font-family:'Inter',sans-serif;font-size:13.5px;font-weight:500;padding:11px 14px;
-    border:1.5px solid var(--outline);background:#FBFCFE;
+    border:1.5px solid var(--outline);background:var(--surface-softer);
     color:var(--on-surface);border-radius:12px;min-width:170px;
     transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
     box-shadow:0 1px 2px rgba(20,30,60,.03);
@@ -246,20 +308,50 @@
     background-repeat:no-repeat;background-position:right 12px center;background-size:15px;
     padding-right:34px;
   }
-  select:hover, input[type=text]:hover, input[type=date]:hover{border-color:#D7DEEA;}
-  select:focus, input:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 4px var(--primary-container);}
+  html[data-theme="dark"] select{
+    background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2398A2BE' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  }
+  select:hover, input[type=text]:hover, input[type=date]:hover{border-color:var(--primary-light);}
+  select:focus, input:focus{outline:none;border-color:var(--primary);background:var(--surface);box-shadow:0 0 0 4px var(--primary-container);}
   select:disabled, input:disabled{opacity:.5;}
+
+  /* MODERN DATE INPUTS — custom calendar icon, roomier value, refined picker button */
+  input[type=date]{
+    position:relative;
+    letter-spacing:.01em;
+    font-variant-numeric:tabular-nums;
+    color-scheme: light;
+  }
+  html[data-theme="dark"] input[type=date]{color-scheme: dark;}
+  input[type=date]::-webkit-calendar-picker-indicator{
+    background:transparent;
+    color:transparent;
+    cursor:pointer;
+    width:22px;height:22px;
+    margin-left:6px;
+    position:relative;
+    opacity:1;
+    filter: invert(46%) sepia(53%) saturate(2018%) hue-rotate(202deg) brightness(97%) contrast(93%);
+    transition:transform .15s ease;
+  }
+  input[type=date]:hover::-webkit-calendar-picker-indicator{transform:scale(1.12);}
+  html[data-theme="dark"] input[type=date]::-webkit-calendar-picker-indicator{
+    filter: invert(74%) sepia(21%) saturate(1934%) hue-rotate(191deg) brightness(101%) contrast(96%);
+  }
+  input[type=date]::-webkit-datetime-edit{padding:0 2px;}
+  input[type=date]::-webkit-datetime-edit-fields-wrapper{padding:0;}
+  input[type=date]::-webkit-inner-spin-button{display:none;}
 
   /* TABLES */
   table{width:100%;border-collapse:collapse;font-size:12.8px;}
   thead th{
     text-align:left;font-size:11px;font-weight:700;color:var(--on-surface-var);
-    padding:13px 16px;background:#FAFBFD;position:sticky;top:0;
+    padding:13px 16px;background:var(--table-head-bg);position:sticky;top:0;
     border-bottom:1px solid var(--outline);
   }
   tbody td{padding:12px 16px;border-bottom:1px solid var(--outline-soft);}
   tbody tr{transition:background .12s;}
-  tbody tr:hover{background:#FAFBFD;}
+  tbody tr:hover{background:var(--table-head-bg);}
   .num{text-align:right;font-family:'Roboto Mono',monospace;}
   .table-scroll{max-height:460px;overflow-y:auto;}
 
@@ -311,6 +403,10 @@
   <div class="appbar-meta">
     <span><span class="material-symbols-outlined" style="font-size:16px;">calendar_today</span><span id="meta-range">No data loaded</span></span>
     <span id="userBadge" style="display:none;"><span class="material-symbols-outlined" style="font-size:16px;">person</span><span id="userBadgeName"></span></span>
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">
+      <span class="material-symbols-outlined icon-moon">dark_mode</span>
+      <span class="material-symbols-outlined icon-sun">light_mode</span>
+    </button>
     <a href="/admin" id="adminLinkBtn" class="icon-btn" title="Admin panel" aria-label="Admin panel" style="display:none;text-decoration:none;">
       <span class="material-symbols-outlined">admin_panel_settings</span>
     </a>
@@ -896,6 +992,16 @@ function setShowGrowth(val){
 }
 document.getElementById('settingShowGrowth').addEventListener('change', e => setShowGrowth(e.target.checked));
 
+/* ---------- theme toggle ---------- */
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = isDark ? 'light' : 'dark';
+  if(next === 'dark') document.documentElement.setAttribute('data-theme','dark');
+  else document.documentElement.removeAttribute('data-theme');
+  try{ localStorage.setItem('purchaseLedgerTheme', next); }catch(e){}
+  if(RAW_DATA.length) renderTrend();
+});
+
 /* ---------- settings dropdown ---------- */
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsPanel = document.getElementById('settingsPanel');
@@ -928,14 +1034,22 @@ function renderTrend(){
   updateGrowthBadges(growthValuePct, growthQtyPct);
   document.getElementById('trendCapNote').textContent = capped ? 'Showing the last 20 days · set a From/To date above for a custom range.' : '';
 
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const chartPrimary = isDark ? '#5B8DEF' : '#2F6FED';
+  const chartPrimaryDark = isDark ? '#7BA3F5' : '#1E4FC4';
+  const chartGold = isDark ? '#FFB84D' : '#F5A623';
+  const chartGoldDark = isDark ? '#FFC876' : '#C97F0C';
+  const chartAxisColor = isDark ? '#98A2BE' : '#8A93A6';
+  const chartGridColor = isDark ? 'rgba(255,255,255,.07)' : 'rgba(20,30,60,.06)';
+
   const annotations = !state.showGrowth ? [] : labels.map((lab, i) => {
     if(i===0 || !values[i-1]) return null;
     const pct = ((values[i]-values[i-1])/values[i-1])*100;
-    const bg = pct>0.05 ? 'rgba(179,38,30,.85)' : (pct<-0.05 ? 'rgba(22,106,62,.85)' : 'rgba(88,98,121,.8)');
+    const bg = pct>0.05 ? (isDark?'rgba(241,120,111,.9)':'rgba(179,38,30,.85)') : (pct<-0.05 ? (isDark?'rgba(63,211,148,.9)':'rgba(22,106,62,.85)') : (isDark?'rgba(152,162,190,.85)':'rgba(88,98,121,.8)'));
     return {
       x: lab, y: values[i]/2, xref:'x', yref:'y',
       text: fmtPct(pct), showarrow:false,
-      font:{size:10, color:'#fff', family:'Roboto Mono'},
+      font:{size:10, color: isDark ? '#0A0E1A' : '#fff', family:'Roboto Mono'},
       bgcolor:bg, borderpad:3, borderradius:4
     };
   }).filter(Boolean);
@@ -946,21 +1060,21 @@ function renderTrend(){
   Plotly.newPlot('trendChart', [
     {
       x: labels, y: values, type:'bar', name:'Value (৳)',
-      marker:{color:'#2F6FED', line:{color:'#1E4FC4', width:.5}}, yaxis:'y1',
+      marker:{color:chartPrimary, line:{color:chartPrimaryDark, width:.5}}, yaxis:'y1',
       text: values.map(v=>fmtMoneyShort(v)), textposition:'outside',
-      textfont:{size:10.5, color:'#1E4FC4', family:'Roboto Mono'},
+      textfont:{size:10.5, color:chartPrimaryDark, family:'Roboto Mono'},
       cliponaxis:false,
       hovertemplate:'%{x}<br>৳%{y:,.0f}<extra></extra>'
     },
     {
       x: labels, y: qty, type:'scatter', mode:'lines+markers', name:'Quantity',
-      line:{color:'#F5A623', width:2.5}, marker:{size:6, color:'#C97F0C'}, yaxis:'y2',
+      line:{color:chartGold, width:2.5}, marker:{size:6, color:chartGoldDark}, yaxis:'y2',
       hovertemplate:'%{x}<br>%{y:,.1f} qty<extra></extra>'
     }
   ], {
     margin:{t:34,l:60,r:60,b:70},
-    font:{family:'Inter', size:11, color:'#8A93A6'},
-    yaxis:{title:'Value (৳)', tickprefix:'৳', gridcolor:'rgba(20,30,60,.06)'},
+    font:{family:'Inter', size:11, color:chartAxisColor},
+    yaxis:{title:'Value (৳)', tickprefix:'৳', gridcolor:chartGridColor},
     yaxis2:{title:'Quantity', overlaying:'y', side:'right', gridcolor:'transparent'},
     xaxis:{tickangle: labels.length>8 ? -30 : 0},
     legend:{orientation:'h', y:1.14, x:0},
