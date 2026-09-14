@@ -493,6 +493,35 @@
     </div>
   </div>
 
+  <!-- MONTH TO MONTH RATE VARIANCE -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title"><span class="material-symbols-outlined">calendar_month</span>Month-to-Month Rate Variance — Last 3 Months</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <div class="segmented small" id="monthRateSortToggle">
+          <button class="active" data-sort="all">All</button>
+          <button data-sort="up">Rising</button>
+          <button data-sort="down">Falling</button>
+        </div>
+        <div class="field" style="min-width:190px;">
+          <input type="text" id="monthRateSearch" placeholder="Search item…" style="width:100%;" disabled>
+        </div>
+      </div>
+    </div>
+    <div class="card card-flush">
+      <div class="table-scroll" style="max-height:460px;">
+        <table>
+          <thead><tr>
+            <th>Item</th><th>UOM</th>
+            <th class="num">Avg Rate (Month)</th><th class="num">Avg Rate (Month)</th><th class="num">Avg Rate (Latest Month)</th>
+            <th class="num">Net Variance</th><th>Trend</th>
+          </tr></thead>
+          <tbody id="monthRateTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <footer>
     <span>300 Limited · Infinite possibilities</span>
     <span id="footerSource">No file uploaded yet</span>
@@ -537,7 +566,7 @@ function emptyCard(elId, icon, title, sub){
 /* ---------- global dataset state ---------- */
 let RAW_DATA = [];
 let allDates = [], allItems = [], allSuppliers = [];
-let state = { item:'', supplier:'', period:'daily', dateFrom:'', dateTo:'', rateSort:'all', showGrowth:false, autoSlideMovers:true };
+let state = { item:'', supplier:'', period:'daily', dateFrom:'', dateTo:'', rateSort:'all', monthRateSort:'all', showGrowth:false, autoSlideMovers:true };
 let moversUp = [], moversDown = [], moversUpIdx = 0, moversDownIdx = 0, moversUpTimer = null, moversDownTimer = null;
 
 function loadDataset(records, sourceLabel){
@@ -556,6 +585,7 @@ function loadDataset(records, sourceLabel){
   supSel.innerHTML = '<option value="">All suppliers</option>' + allSuppliers.map(s=>`<option value="${s}">${s}</option>`).join('');
   itemSel.disabled = false; supSel.disabled = false;
   document.getElementById('rateSearch').disabled = false;
+  document.getElementById('monthRateSearch').disabled = false;
   document.getElementById('dateFrom').disabled = false;
   document.getElementById('dateTo').disabled = false;
   state.item=''; state.supplier=''; state.dateFrom=''; state.dateTo='';
@@ -603,6 +633,14 @@ document.querySelectorAll('#rateSortToggle button').forEach(btn=>{
     btn.classList.add('active');
     state.rateSort = btn.dataset.sort;
     renderRateTable(document.getElementById('rateSearch').value);
+  });
+});
+document.querySelectorAll('#monthRateSortToggle button').forEach(btn=>{
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#monthRateSortToggle button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    state.monthRateSort = btn.dataset.sort;
+    renderMonthRateTable(document.getElementById('monthRateSearch').value);
   });
 });
 
@@ -1084,12 +1122,98 @@ function renderRateTable(filterText){
 }
 document.getElementById('rateSearch').addEventListener('input', e => renderRateTable(e.target.value));
 
+/* ---------- month-to-month rate variance table: avg rate per month, last 3 months ---------- */
+function monthKey(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
+function monthLabel(key){
+  const [y,m] = key.split('-').map(Number);
+  return MONTHS_SHORT[m-1] + " '" + String(y).slice(-2);
+}
+
+function renderMonthRateTable(filterText){
+  const has = RAW_DATA.length > 0;
+  if(!has){
+    document.getElementById('monthRateTableBody').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="icon-badge"><span class="material-symbols-outlined">calendar_month</span></div><div class="t1">No data</div><div class="t2">Upload an Excel file via Settings to see month-to-month rate variance.</div></div></td></tr>';
+    return;
+  }
+
+  let data = RAW_DATA;
+  if(state.supplier) data = data.filter(r => r.supplier === state.supplier);
+
+  const byItem = new Map();
+  data.forEach(r => {
+    if(!byItem.has(r.item)) byItem.set(r.item, []);
+    byItem.get(r.item).push(r);
+  });
+
+  let items = [...byItem.keys()].sort();
+  if(filterText) items = items.filter(i => i.toLowerCase().includes(filterText.toLowerCase()));
+
+  let rowData = items.map(item => {
+    const recs = byItem.get(item);
+    const byMonth = new Map();
+    recs.forEach(r => {
+      const key = monthKey(r._d);
+      if(!byMonth.has(key)) byMonth.set(key, { qty:0, amount:0, uom:r.uom, count:0 });
+      const m = byMonth.get(key);
+      m.qty += (r.qty || 0);
+      m.amount += (r.amount || 0);
+      m.count += 1;
+      m.uom = r.uom || m.uom;
+    });
+    const monthKeys = [...byMonth.keys()].sort();
+    const last3Keys = monthKeys.slice(-3);
+    if(last3Keys.length < 2) return null;
+
+    const months = last3Keys.map(key => {
+      const m = byMonth.get(key);
+      const avgRate = m.qty > 0 ? (m.amount / m.qty) : null;
+      return { key, avgRate, uom: m.uom };
+    });
+
+    const validMonths = months.filter(m => m.avgRate !== null);
+    if(validMonths.length < 2) return null;
+    const first = validMonths[0].avgRate, last = validMonths[validMonths.length-1].avgRate;
+    const netPct = first ? ((last-first)/first)*100 : 0;
+    const cls = netPct>0.05?'up':(netPct<-0.05?'down':'flat');
+    return { item, uom: months[months.length-1].uom, months, netPct, cls };
+  }).filter(Boolean);
+
+  if(state.monthRateSort !== 'all') rowData = rowData.filter(r => r.cls === state.monthRateSort);
+
+  rowData.sort((a,b) => {
+    const aFlat = a.cls==='flat', bFlat = b.cls==='flat';
+    if(aFlat !== bFlat) return aFlat ? 1 : -1;
+    return Math.abs(b.netPct) - Math.abs(a.netPct);
+  });
+
+  const rows = rowData.map(({item, uom, months, netPct, cls}) => {
+    const padded = [null,null,null].map((_,i) => months[i - (3-months.length)] || null);
+    const cells = padded.map(m => {
+      return m && m.avgRate !== null
+        ? `<div class="cell-datecell"><span class="cell-date">${monthLabel(m.key)}</span><span class="cell-rate">৳${fmtNum(m.avgRate)}</span></div>`
+        : '<span style="color:var(--on-surface-var);">—</span>';
+    });
+    const trendArrow = netPct>0.05 ? '↑ rising' : (netPct<-0.05 ? '↓ falling' : '→ stable');
+    const trendColor = netPct>0.05?'var(--error)':(netPct<-0.05?'var(--success)':'var(--on-surface-var)');
+    return `<tr>
+      <td>${item}</td><td>${uom}</td>
+      <td class="num">${cells[0]}</td><td class="num">${cells[1]}</td><td class="num">${cells[2]}</td>
+      <td class="num"><span class="chip ${cls}">${fmtPct(netPct)}</span></td>
+      <td style="color:${trendColor};font-size:12px;font-weight:500;">${trendArrow}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('monthRateTableBody').innerHTML = rows || '<tr><td colspan="7" style="text-align:center;color:var(--on-surface-var);padding:24px;">No items match this filter, or not enough months of data yet.</td></tr>';
+}
+document.getElementById('monthRateSearch').addEventListener('input', e => renderMonthRateTable(e.target.value));
+
 /* ---------- render all ---------- */
 function renderAll(){
   renderKPIs();
   renderTrend();
   renderDay();
   renderRateTable(document.getElementById('rateSearch').value);
+  renderMonthRateTable(document.getElementById('monthRateSearch').value);
 }
 window.addEventListener('resize', () => { if(RAW_DATA.length) renderTrend(); });
 
