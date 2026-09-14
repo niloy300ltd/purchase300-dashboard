@@ -341,6 +341,10 @@
     <div class="card" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:18px;">
       <div style="display:flex;gap:18px;flex-wrap:wrap;">
         <div class="field">
+          <label>Month</label>
+          <select id="filterMonth" disabled><option value="">All months</option></select>
+        </div>
+        <div class="field">
           <label>Item</label>
           <select id="filterItem" disabled><option value="">All items</option></select>
         </div>
@@ -542,7 +546,7 @@ function emptyCard(elId, icon, title, sub){
 /* ---------- global dataset state ---------- */
 let RAW_DATA = [];
 let allDates = [], allItems = [], allSuppliers = [];
-let state = { item:'', supplier:'', period:'daily', dateFrom:'', dateTo:'', rateSort:'all', monthRateSort:'all', showGrowth:false, autoSlideMovers:true };
+let state = { item:'', supplier:'', month:'', period:'daily', dateFrom:'', dateTo:'', rateSort:'all', monthRateSort:'all', showGrowth:false, autoSlideMovers:true };
 let moversUp = [], moversDown = [], moversUpIdx = 0, moversDownIdx = 0, moversUpTimer = null, moversDownTimer = null;
 
 function loadDataset(records, sourceLabel){
@@ -557,14 +561,18 @@ function loadDataset(records, sourceLabel){
 
   const itemSel = document.getElementById('filterItem');
   const supSel = document.getElementById('filterSupplier');
+  const monthSel = document.getElementById('filterMonth');
+  const allMonths = [...new Set(RAW_DATA.map(r=>r.date.slice(0,7)))].sort();
+  monthSel.innerHTML = '<option value="">All months</option>' + allMonths.map(m=>`<option value="${m}">${monthLabel(m)}</option>`).join('');
   itemSel.innerHTML = '<option value="">All items</option>' + allItems.map(i=>`<option value="${i}">${i}</option>`).join('');
   supSel.innerHTML = '<option value="">All suppliers</option>' + allSuppliers.map(s=>`<option value="${s}">${s}</option>`).join('');
-  itemSel.disabled = false; supSel.disabled = false;
+  itemSel.disabled = false; supSel.disabled = false; monthSel.disabled = false;
   document.getElementById('rateSearch').disabled = false;
   document.getElementById('monthRateSearch').disabled = false;
   document.getElementById('dateFrom').disabled = false;
   document.getElementById('dateTo').disabled = false;
-  state.item=''; state.supplier=''; state.dateFrom=''; state.dateTo='';
+  state.item=''; state.supplier=''; state.month=''; state.dateFrom=''; state.dateTo='';
+  monthSel.value = '';
   document.getElementById('dateFrom').value=''; document.getElementById('dateTo').value='';
   document.getElementById('dateFrom').min = allDates[0]; document.getElementById('dateFrom').max = allDates[allDates.length-1];
   document.getElementById('dateTo').min = allDates[0]; document.getElementById('dateTo').max = allDates[allDates.length-1];
@@ -582,6 +590,7 @@ function filteredData(){
   return RAW_DATA.filter(r =>
     (!state.item || r.item === state.item) &&
     (!state.supplier || r.supplier === state.supplier) &&
+    (!state.month || r.date.slice(0,7) === state.month) &&
     (!state.dateFrom || r.date >= state.dateFrom) &&
     (!state.dateTo || r.date <= state.dateTo)
   );
@@ -589,10 +598,27 @@ function filteredData(){
 
 document.getElementById('filterItem').addEventListener('change', e => { state.item = e.target.value; renderAll(); });
 document.getElementById('filterSupplier').addEventListener('change', e => { state.supplier = e.target.value; renderAll(); });
+document.getElementById('filterMonth').addEventListener('change', e => {
+  state.month = e.target.value;
+  const scoped = filteredData();
+  const scopedDates = [...new Set(scoped.map(r=>r.date))].sort();
+  const daySel = document.getElementById('daySelect');
+  if(scopedDates.length){
+    daySel.min = scopedDates[0]; daySel.max = scopedDates[scopedDates.length-1];
+    daySel.value = scopedDates[scopedDates.length-1];
+  }
+  renderAll();
+});
 document.getElementById('resetFilters').addEventListener('click', () => {
-  state.item=''; state.supplier='';
+  state.item=''; state.supplier=''; state.month='';
   document.getElementById('filterItem').value='';
   document.getElementById('filterSupplier').value='';
+  document.getElementById('filterMonth').value='';
+  if(allDates.length){
+    const daySel = document.getElementById('daySelect');
+    daySel.min = allDates[0]; daySel.max = allDates[allDates.length-1];
+    daySel.value = allDates[allDates.length-1];
+  }
   renderAll();
 });
 document.getElementById('dateFrom').addEventListener('change', e => { state.dateFrom = e.target.value; renderAll(); });
@@ -625,6 +651,7 @@ function computeMovers(){
   const byItem = new Map();
   RAW_DATA.forEach(r => {
     if(state.supplier && r.supplier !== state.supplier) return;
+    if(state.month && r.date.slice(0,7) !== state.month) return;
     if(!byItem.has(r.item)) byItem.set(r.item, []);
     byItem.get(r.item).push(r);
   });
@@ -1051,6 +1078,7 @@ function renderRateTable(filterText){
   }
   const byItem = new Map();
   RAW_DATA.forEach(r => {
+    if(state.month && r.date.slice(0,7) !== state.month) return;
     if(!byItem.has(r.item)) byItem.set(r.item, []);
     byItem.get(r.item).push(r);
   });
@@ -1114,6 +1142,7 @@ function renderMonthRateTable(filterText){
 
   let data = RAW_DATA;
   if(state.supplier) data = data.filter(r => r.supplier === state.supplier);
+  if(state.month) data = data.filter(r => r.date.slice(0,7) === state.month);
 
   const byItem = new Map();
   data.forEach(r => {
