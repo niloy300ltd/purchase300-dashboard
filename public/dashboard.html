@@ -96,7 +96,7 @@
   .settings-divider{height:1px;background:var(--outline);margin:10px 0;}
   .settings-upload-status{font-size:11.5px;color:var(--on-surface-var);margin-bottom:8px;word-break:break-all;}
 
-  .wrap{max-width:1400px;margin:0 auto;padding:36px 48px 110px;}
+  .wrap{width:100%;padding:36px 48px 110px;}
 
   /* BUTTONS */
   .btn{
@@ -136,15 +136,6 @@
   .card-flush{padding:0;overflow:hidden;}
 
   #fileInput{display:none;}
-
-  /* SNACKBAR (errors only) */
-  .snackbar{
-    position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(120%);
-    background:var(--error);color:#fff;padding:13px 24px;border-radius:100px;
-    font-size:13px;box-shadow:0 10px 30px rgba(179,38,30,.35);display:flex;align-items:center;gap:10px;
-    transition:transform .3s ease;z-index:100;
-  }
-  .snackbar.show{transform:translateX(-50%) translateY(0);}
 
   /* EMPTY STATE — a quiet, premium placeholder rather than a flat grey box */
   .empty-state{
@@ -356,7 +347,7 @@
 
 <div class="wrap">
 
-  <!-- ITEM / SUPPLIER FILTERS — placed above the summary so scope is set first -->
+  <!-- ITEM / SUPPLIER / DATE FILTERS — placed above the summary so scope is set first -->
   <div class="section" style="margin-bottom:22px;">
     <div class="card" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:18px;">
       <div style="display:flex;gap:16px;flex-wrap:wrap;">
@@ -374,6 +365,16 @@
           <label>Supplier</label>
           <span class="material-symbols-outlined field-icon">local_shipping</span>
           <select id="filterSupplier" disabled><option value="">All suppliers</option></select>
+        </div>
+        <div class="field icon-field">
+          <label>From</label>
+          <span class="material-symbols-outlined field-icon">event</span>
+          <input type="date" id="dateFrom" disabled>
+        </div>
+        <div class="field icon-field">
+          <label>To</label>
+          <span class="material-symbols-outlined field-icon">event</span>
+          <input type="date" id="dateTo" disabled>
         </div>
       </div>
       <button class="btn btn-text" id="resetFilters">
@@ -399,30 +400,12 @@
       </div>
     </div>
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:16px;">
-        <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;">
-          <div class="field icon-field">
-            <label>From</label>
-            <span class="material-symbols-outlined field-icon">event</span>
-            <input type="date" id="dateFrom" disabled>
-          </div>
-          <div class="field icon-field">
-            <label>To</label>
-            <span class="material-symbols-outlined field-icon">event</span>
-            <input type="date" id="dateTo" disabled>
-          </div>
-          <button class="btn btn-text" id="resetDateRange" style="padding:11px 18px;">Reset range</button>
-        </div>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-          <button class="btn btn-gold" id="toggleGrowth">
-            <span class="material-symbols-outlined" style="font-size:17px;">insights</span>
-            <span id="toggleGrowthLabel">Show Growth</span>
-          </button>
-          <div id="trendGrowth" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
-        </div>
+      <div style="display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:16px;">
+        <div id="trendGrowth" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
       </div>
       <div id="trendChart" style="height:380px;"></div>
       <div class="section-desc" id="trendCapNote" style="margin-top:12px;"></div>
+
     </div>
   </div>
 
@@ -536,8 +519,6 @@
   </footer>
 </div>
 
-<div class="snackbar" id="snackbar"><span class="material-symbols-outlined">error</span><span id="snackText"></span></div>
-
 <script>
 /* ---------- helpers ---------- */
 const fmtMoney = n => '৳' + Math.round(n).toLocaleString('en-IN');
@@ -555,11 +536,7 @@ const fmtShortDate = d => d.getDate() + ' ' + MONTHS_SHORT[d.getMonth()];
 const fmtYY = d => "'" + String(d.getFullYear()).slice(-2);
 
 function showSnack(text){
-  const bar = document.getElementById('snackbar');
-  document.getElementById('snackText').textContent = text;
-  bar.classList.add('show');
-  clearTimeout(window._snackTimer);
-  window._snackTimer = setTimeout(()=>bar.classList.remove('show'), 3800);
+  console.error(text);
 }
 
 function emptyCard(elId, icon, title, sub){
@@ -638,10 +615,12 @@ document.getElementById('filterMonth').addEventListener('change', e => {
   renderAll();
 });
 document.getElementById('resetFilters').addEventListener('click', () => {
-  state.item=''; state.supplier=''; state.month='';
+  state.item=''; state.supplier=''; state.month=''; state.dateFrom=''; state.dateTo='';
   document.getElementById('filterItem').value='';
   document.getElementById('filterSupplier').value='';
   document.getElementById('filterMonth').value='';
+  document.getElementById('dateFrom').value='';
+  document.getElementById('dateTo').value='';
   if(allDates.length){
     const daySel = document.getElementById('daySelect');
     daySel.min = allDates[0]; daySel.max = allDates[allDates.length-1];
@@ -651,12 +630,6 @@ document.getElementById('resetFilters').addEventListener('click', () => {
 });
 document.getElementById('dateFrom').addEventListener('change', e => { state.dateFrom = e.target.value; renderAll(); });
 document.getElementById('dateTo').addEventListener('change', e => { state.dateTo = e.target.value; renderAll(); });
-document.getElementById('resetDateRange').addEventListener('click', () => {
-  state.dateFrom=''; state.dateTo='';
-  document.getElementById('dateFrom').value='';
-  document.getElementById('dateTo').value='';
-  renderAll();
-});
 document.querySelectorAll('#rateSortToggle button').forEach(btn=>{
   btn.addEventListener('click', () => {
     document.querySelectorAll('#rateSortToggle button').forEach(b=>b.classList.remove('active'));
@@ -918,12 +891,9 @@ function updateGrowthBadges(valPct, qtyPct){
 
 function setShowGrowth(val){
   state.showGrowth = val;
-  document.getElementById('toggleGrowth').classList.toggle('active', val);
-  document.getElementById('toggleGrowthLabel').textContent = val ? 'Hide Growth' : 'Show Growth';
   document.getElementById('settingShowGrowth').checked = val;
   if(RAW_DATA.length) renderTrend();
 }
-document.getElementById('toggleGrowth').addEventListener('click', () => setShowGrowth(!state.showGrowth));
 document.getElementById('settingShowGrowth').addEventListener('change', e => setShowGrowth(e.target.checked));
 
 /* ---------- settings dropdown ---------- */
