@@ -201,6 +201,30 @@
   .date-range-custom{display:flex;flex-direction:column;gap:10px;}
   .date-range-custom .field{width:100%;}
   .date-range-custom select, .date-range-custom input{width:100%;min-width:0;padding-right:42px;}
+
+  /* CUSTOM SELECT DROPDOWN (Month / Item / Supplier) — replaces native <select> entirely to avoid browser-native arrow rendering quirks */
+  .cs-panel{min-width:260px;max-width:320px;padding:10px;}
+  .cs-search-wrap{position:relative;margin-bottom:8px;}
+  .cs-search-wrap .material-symbols-outlined{
+    position:absolute;left:10px;top:50%;transform:translateY(-50%);
+    font-size:16px;color:var(--on-surface-var);pointer-events:none;
+  }
+  .cs-search{
+    width:100%;padding:9px 12px 9px 34px;border:1.5px solid var(--outline);border-radius:10px;
+    background:var(--surface-softer);color:var(--on-surface);font-family:'Inter',sans-serif;font-size:13px;
+  }
+  .cs-search:focus{outline:none;border-color:var(--primary);}
+  .cs-options{max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;}
+  .cs-option{
+    padding:9px 12px;border-radius:9px;font-size:13px;font-weight:500;color:var(--on-surface);
+    cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    transition:background .12s ease,color .12s ease;
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+  }
+  .cs-option:hover{background:var(--primary-container);color:var(--primary);}
+  .cs-option.active{background:var(--primary);color:#fff;font-weight:600;}
+  .cs-option .material-symbols-outlined{font-size:16px;}
+  .cs-empty{padding:14px 10px;text-align:center;font-size:12.5px;color:var(--on-surface-var);}
   .date-pick-btn{
     position:absolute;right:6px;top:calc(50% + 9px);transform:translateY(-50%);
     width:28px;height:28px;border-radius:8px;border:none;cursor:pointer;
@@ -501,20 +525,46 @@
   <div class="section" id="filterBar" style="margin-bottom:22px;">
     <div class="card" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:18px;">
       <div style="display:flex;gap:16px;flex-wrap:wrap;">
-        <div class="field icon-field">
+        <div class="field date-range-field">
           <label>Month</label>
-          <span class="material-symbols-outlined field-icon">calendar_month</span>
-          <select id="filterMonth" disabled><option value="">All months</option></select>
+          <button type="button" class="date-range-trigger" id="filterMonthTrigger" disabled>
+            <span class="material-symbols-outlined" style="font-size:17px;">calendar_month</span>
+            <span id="filterMonthLabel">All months</span>
+            <span class="material-symbols-outlined date-range-chevron">expand_more</span>
+          </button>
+          <div class="date-range-panel cs-panel" id="filterMonthPanel">
+            <div class="cs-options" id="filterMonthOptions"></div>
+          </div>
         </div>
-        <div class="field icon-field">
+        <div class="field date-range-field">
           <label>Item</label>
-          <span class="material-symbols-outlined field-icon">inventory_2</span>
-          <select id="filterItem" disabled><option value="">All items</option></select>
+          <button type="button" class="date-range-trigger" id="filterItemTrigger" disabled>
+            <span class="material-symbols-outlined" style="font-size:17px;">inventory_2</span>
+            <span id="filterItemLabel">All items</span>
+            <span class="material-symbols-outlined date-range-chevron">expand_more</span>
+          </button>
+          <div class="date-range-panel cs-panel" id="filterItemPanel">
+            <div class="cs-search-wrap">
+              <span class="material-symbols-outlined">search</span>
+              <input type="text" class="cs-search" id="filterItemSearch" placeholder="Search items…">
+            </div>
+            <div class="cs-options" id="filterItemOptions"></div>
+          </div>
         </div>
-        <div class="field icon-field">
+        <div class="field date-range-field">
           <label>Supplier</label>
-          <span class="material-symbols-outlined field-icon">local_shipping</span>
-          <select id="filterSupplier" disabled><option value="">All suppliers</option></select>
+          <button type="button" class="date-range-trigger" id="filterSupplierTrigger" disabled>
+            <span class="material-symbols-outlined" style="font-size:17px;">local_shipping</span>
+            <span id="filterSupplierLabel">All suppliers</span>
+            <span class="material-symbols-outlined date-range-chevron">expand_more</span>
+          </button>
+          <div class="date-range-panel cs-panel" id="filterSupplierPanel">
+            <div class="cs-search-wrap">
+              <span class="material-symbols-outlined">search</span>
+              <input type="text" class="cs-search" id="filterSupplierSearch" placeholder="Search suppliers…">
+            </div>
+            <div class="cs-options" id="filterSupplierOptions"></div>
+          </div>
         </div>
         <div class="field date-range-field">
           <label>Date Range</label>
@@ -732,18 +782,16 @@ function loadDataset(records, sourceLabel){
   document.getElementById('meta-range').textContent = allDates.length ? (allDates[0] + ' → ' + allDates[allDates.length-1]) : 'No data loaded';
   document.getElementById('footerSource').textContent = 'Source: ' + sourceLabel;
 
-  const itemSel = document.getElementById('filterItem');
-  const supSel = document.getElementById('filterSupplier');
-  const monthSel = document.getElementById('filterMonth');
   const allMonths = [...new Set(RAW_DATA.map(r=>r.date.slice(0,7)))].sort();
-  monthSel.innerHTML = '<option value="">All months</option>' + allMonths.map(m=>`<option value="${m}">${monthLabel(m)}</option>`).join('');
-  itemSel.innerHTML = '<option value="">All items</option>' + allItems.map(i=>`<option value="${i}">${i}</option>`).join('');
-  supSel.innerHTML = '<option value="">All suppliers</option>' + allSuppliers.map(s=>`<option value="${s}">${s}</option>`).join('');
-  itemSel.disabled = false; supSel.disabled = false; monthSel.disabled = false;
+  populateDropdown('filterMonth', allMonths, 'All months', monthLabel);
+  populateDropdown('filterItem', allItems, 'All items');
+  populateDropdown('filterSupplier', allSuppliers, 'All suppliers');
   document.getElementById('rateSearch').disabled = false;
   document.getElementById('dateRangeTrigger').disabled = false;
   state.item=''; state.supplier=''; state.month=''; state.dateFrom=''; state.dateTo='';
-  monthSel.value = '';
+  setDropdownValue('filterMonth', '', 'All months');
+  setDropdownValue('filterItem', '', 'All items');
+  setDropdownValue('filterSupplier', '', 'All suppliers');
   document.getElementById('dateFrom').value=''; document.getElementById('dateTo').value='';
   document.getElementById('dateFrom').min = allDates[0]; document.getElementById('dateFrom').max = allDates[allDates.length-1];
   document.getElementById('dateTo').min = allDates[0]; document.getElementById('dateTo').max = allDates[allDates.length-1];
@@ -768,10 +816,72 @@ function filteredData(){
   );
 }
 
-document.getElementById('filterItem').addEventListener('change', e => { state.item = e.target.value; renderAll(); });
-document.getElementById('filterSupplier').addEventListener('change', e => { state.supplier = e.target.value; renderAll(); });
-document.getElementById('filterMonth').addEventListener('change', e => {
-  state.month = e.target.value;
+/* ---------- custom dropdown component (Month / Item / Supplier) ---------- */
+function setDropdownValue(key, value, labelText){
+  document.getElementById(key + 'Label').textContent = labelText;
+  document.querySelectorAll('#' + key + 'Options .cs-option').forEach(opt => {
+    opt.classList.toggle('active', opt.dataset.value === value);
+  });
+}
+function populateDropdown(key, values, allLabel, labelFn){
+  const optionsEl = document.getElementById(key + 'Options');
+  const rows = [`<div class="cs-option active" data-value="">${allLabel}</div>`]
+    .concat(values.map(v => `<div class="cs-option" data-value="${v}">${labelFn ? labelFn(v) : v}</div>`));
+  optionsEl.innerHTML = rows.join('');
+  document.getElementById(key + 'Trigger').disabled = false;
+}
+function closeDropdown(key){
+  document.getElementById(key + 'Panel').classList.remove('open');
+  document.getElementById(key + 'Trigger').classList.remove('open');
+}
+function setupDropdown(key, stateKey, allLabel, onSelect){
+  const trigger = document.getElementById(key + 'Trigger');
+  const panel = document.getElementById(key + 'Panel');
+  const optionsEl = document.getElementById(key + 'Options');
+  const searchEl = document.getElementById(key + 'Search');
+
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = !panel.classList.contains('open');
+    // close any other open dropdown first
+    document.querySelectorAll('.date-range-panel.open').forEach(p => { if(p !== panel){ p.classList.remove('open'); } });
+    document.querySelectorAll('.date-range-trigger.open').forEach(t => { if(t !== trigger){ t.classList.remove('open'); } });
+    panel.classList.toggle('open', willOpen);
+    trigger.classList.toggle('open', willOpen);
+    if(willOpen && searchEl){ searchEl.value=''; optionsEl.querySelectorAll('.cs-option').forEach(o=>o.style.display=''); setTimeout(()=>searchEl.focus(), 30); }
+  });
+
+  optionsEl.addEventListener('click', (e) => {
+    const opt = e.target.closest('.cs-option');
+    if(!opt) return;
+    const value = opt.dataset.value;
+    state[stateKey] = value;
+    setDropdownValue(key, value, value ? opt.textContent : allLabel);
+    closeDropdown(key);
+    if(onSelect) onSelect(value);
+    renderAll();
+  });
+
+  if(searchEl){
+    searchEl.addEventListener('click', e => e.stopPropagation());
+    searchEl.addEventListener('input', () => {
+      const q = searchEl.value.trim().toLowerCase();
+      optionsEl.querySelectorAll('.cs-option').forEach(opt => {
+        const match = !q || opt.textContent.toLowerCase().includes(q) || opt.dataset.value === '';
+        opt.style.display = match ? '' : 'none';
+      });
+    });
+  }
+
+  document.addEventListener('click', (e) => {
+    if(panel.classList.contains('open') && !panel.contains(e.target) && e.target !== trigger && !trigger.contains(e.target)){
+      closeDropdown(key);
+    }
+  });
+}
+setupDropdown('filterItem', 'item', 'All items');
+setupDropdown('filterSupplier', 'supplier', 'All suppliers');
+setupDropdown('filterMonth', 'month', 'All months', () => {
   const scoped = filteredData();
   const scopedDates = [...new Set(scoped.map(r=>r.date))].sort();
   const daySel = document.getElementById('daySelect');
@@ -779,13 +889,13 @@ document.getElementById('filterMonth').addEventListener('change', e => {
     daySel.min = scopedDates[0]; daySel.max = scopedDates[scopedDates.length-1];
     daySel.value = scopedDates[scopedDates.length-1];
   }
-  renderAll();
 });
+
 document.getElementById('resetFilters').addEventListener('click', () => {
   state.item=''; state.supplier=''; state.month='';
-  document.getElementById('filterItem').value='';
-  document.getElementById('filterSupplier').value='';
-  document.getElementById('filterMonth').value='';
+  setDropdownValue('filterItem', '', 'All items');
+  setDropdownValue('filterSupplier', '', 'All suppliers');
+  setDropdownValue('filterMonth', '', 'All months');
   if(allDates.length){
     const daySel = document.getElementById('daySelect');
     daySel.min = allDates[0]; daySel.max = allDates[allDates.length-1];
