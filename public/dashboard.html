@@ -366,6 +366,7 @@
   }
   select:hover, input[type=text]:hover, input[type=date]:hover{border-color:var(--primary-light);}
   select:focus, input:focus{outline:none;border-color:var(--primary);background:var(--surface);box-shadow:0 0 0 4px var(--primary-container);}
+  select:focus{box-shadow:0 0 0 2px var(--primary-container);}
   select:disabled, input:disabled{opacity:.5;}
 
   /* MODERN DATE INPUTS — custom calendar icon, roomier value, refined picker button */
@@ -703,7 +704,11 @@ function showSnack(text){
 }
 
 function emptyCard(elId, icon, title, sub){
-  document.getElementById(elId).innerHTML = `
+  const el = document.getElementById(elId);
+  if(el.classList.contains('js-plotly-plot') && window.Plotly){
+    try{ Plotly.purge(el); }catch(e){}
+  }
+  el.innerHTML = `
     <div class="empty-state">
       <div class="icon-badge"><span class="material-symbols-outlined">${icon}</span></div>
       <div class="t1">${title}</div>
@@ -1486,94 +1491,74 @@ function renderRateVarianceSection(){
 document.getElementById('rateSearch').addEventListener('input', renderRateVarianceSection);
 
 /* ---------- item rate variance chart: driven by the global Item/Supplier/Month filters ---------- */
-function topRisingItem(){
-  const byItem = new Map();
-  RAW_DATA.forEach(r => {
-    if(state.supplier && r.supplier !== state.supplier) return;
-    if(state.month && r.date.slice(0,7) !== state.month) return;
-    if(!byItem.has(r.item)) byItem.set(r.item, []);
-    byItem.get(r.item).push(r);
-  });
-  let best = null;
-  byItem.forEach((arr, item) => {
-    const hist = arr.slice().sort((a,b)=>a._d-b._d);
-    const last3 = hist.slice(-3);
-    if(last3.length < 2) return;
-    const first = last3[0].rate, last = last3[last3.length-1].rate;
-    const netPct = first ? ((last-first)/first)*100 : 0;
-    if(netPct > 0.05 && (!best || netPct > best.netPct)) best = { item, netPct };
-  });
-  return best ? best.item : null;
-}
-
 function renderItemRateChart(){
   const chartEl = document.getElementById('itemRateChart');
   const noteEl = document.getElementById('itemRateChartNote');
+  noteEl.textContent = '';
+
   if(!RAW_DATA.length){
-    noteEl.textContent = '';
     emptyCard('itemRateChart', 'show_chart', 'No data', 'Upload an Excel file via Settings to see this chart.');
     return;
   }
-  let effectiveItem = state.item;
-  let autoSelected = false;
-  if(!effectiveItem){
-    effectiveItem = topRisingItem();
-    autoSelected = true;
-  }
-  if(!effectiveItem){
-    noteEl.textContent = '';
-    emptyCard('itemRateChart', 'touch_app', 'No rising item to show', 'Choose an item from the filters above, or there is no rising item yet with the current filters.');
+  if(!state.item){
+    emptyCard('itemRateChart', 'touch_app', 'Select an item to begin', 'Choose an item from the filters above to see how its purchase rate has moved over time.');
     return;
   }
-  let recs = RAW_DATA.filter(r => r.item === effectiveItem);
+  let recs = RAW_DATA.filter(r => r.item === state.item);
   if(state.supplier) recs = recs.filter(r => r.supplier === state.supplier);
   if(state.month) recs = recs.filter(r => r.date.slice(0,7) === state.month);
   recs = recs.slice().sort((a,b)=>a._d-b._d);
 
   if(recs.length < 2){
-    noteEl.textContent = '';
-    emptyCard('itemRateChart', 'show_chart', 'Not enough history', 'This item needs at least two purchases (with the current filters) to show a variance trend.');
+    emptyCard('itemRateChart', 'show_chart', 'Not enough history', '"' + state.item + '" needs at least two purchases (with the current filters) to show a variance trend.');
     return;
   }
-
-  noteEl.innerHTML = autoSelected
-    ? `<span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px;color:var(--error);">trending_up</span> Showing highest rising item: <strong style="color:var(--on-surface);">${effectiveItem}</strong> — select an item above to pin a specific one.`
-    : '';
 
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const upColor = isDark ? '#F1786F' : '#E15B5B';
   const downColor = isDark ? '#3FD394' : '#26B87A';
   const lineColor = isDark ? '#5B8DEF' : '#2F6FED';
+  const fillColor = isDark ? 'rgba(91,141,239,.16)' : 'rgba(47,111,237,.10)';
   const axisColor = isDark ? '#98A2BE' : '#8A93A6';
   const gridColor = isDark ? 'rgba(255,255,255,.07)' : 'rgba(20,30,60,.06)';
 
   const dates = recs.map(r => r.date);
   const rates = recs.map(r => r.rate);
   const pct = recs.map((r,i) => i===0 ? 0 : ((r.rate - recs[i-1].rate) / (recs[i-1].rate || 1)) * 100);
-  const barColors = pct.map((p,i) => i===0 ? axisColor : (p>0.05?upColor:(p<-0.05?downColor:axisColor)));
-  // Only label bars with an actual change — labelling every near-zero bar makes the chart unreadable when there are many purchase points.
-  const barText = pct.map((p,i) => i===0 ? 'baseline' : (Math.abs(p) > 0.05 ? fmtPct(p) : ''));
-  const hoverText = pct.map((p,i) => i===0 ? 'baseline' : (Math.abs(p) > 0.05 ? fmtPct(p) : 'no change'));
+  // Only mark points with an actual change — a dot for every near-zero point turns into unreadable clutter on long histories.
+  const changeIdx = pct.map((p,i) => i>0 && Math.abs(p) > 0.05 ? i : -1).filter(i => i>=0);
+  const markerX = changeIdx.map(i => dates[i]);
+  const markerY = changeIdx.map(i => pct[i]);
+  const markerColor = changeIdx.map(i => pct[i] > 0 ? upColor : downColor);
+  const markerText = changeIdx.map(i => fmtPct(pct[i]));
 
-  if(!chartEl.classList.contains('js-plotly-plot')) chartEl.innerHTML = '';
+  if(chartEl.classList.contains('js-plotly-plot') && window.Plotly){
+    try{ Plotly.purge(chartEl); }catch(e){}
+  }
+  chartEl.innerHTML = '';
 
   // Cap the number of x-axis tick labels shown so dates don't overlap into unreadable clutter.
-  const maxTicks = 14;
+  const maxTicks = 12;
   const tickStep = Math.max(1, Math.ceil(dates.length / maxTicks));
   const tickvals = dates.filter((_, i) => i % tickStep === 0);
 
   Plotly.newPlot('itemRateChart', [
     {
-      x: dates, y: pct, type:'bar', name:'Variance %', yaxis:'y1',
-      marker:{color:barColors, line:{color:barColors, width:1}},
-      text: barText, textposition:'outside',
-      textfont:{size:10, color:axisColor, family:'Roboto Mono'},
-      customdata: hoverText,
-      hovertemplate:'%{x}<br>%{customdata}<extra></extra>'
+      x: dates, y: pct, type:'scatter', mode:'lines', name:'Variance %', yaxis:'y1',
+      line:{color:lineColor, width:2, shape:'spline', smoothing:0.35},
+      fill:'tozeroy', fillcolor:fillColor,
+      hoverinfo:'skip'
+    },
+    {
+      x: markerX, y: markerY, type:'scatter', mode:'markers+text', name:'Rate change', yaxis:'y1',
+      marker:{size:9, color:markerColor, line:{color:isDark?'#0A0E1A':'#fff', width:2}},
+      text: markerText, textposition:'top center',
+      textfont:{size:10.5, color:axisColor, family:'Roboto Mono', weight:600},
+      hovertemplate:'%{x}<br>%{text}<extra></extra>'
     },
     {
       x: dates, y: rates, type:'scatter', mode:'lines+markers', name:'Rate (৳)', yaxis:'y2',
-      line:{color:lineColor, width:2.5}, marker:{size:5, color:lineColor},
+      line:{color:axisColor, width:1.5, dash:'dot'}, marker:{size:4, color:axisColor},
       hovertemplate:'%{x}<br>৳%{y:,.2f}<extra></extra>'
     }
   ], {
@@ -1587,8 +1572,8 @@ function renderItemRateChart(){
       tickvals: tickvals,
       automargin:true
     },
-    bargap: dates.length > 40 ? 0.15 : 0.3,
     legend:{orientation:'h', y:1.16, x:0},
+    hovermode:'closest',
     plot_bgcolor:'rgba(255,255,255,0)', paper_bgcolor:'rgba(255,255,255,0)'
   }, {displayModeBar:false, responsive:true});
 }
