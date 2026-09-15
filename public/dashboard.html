@@ -160,6 +160,48 @@
 
   .wrap{width:100%;padding:36px 48px 110px;}
 
+  /* STICKY FILTER BAR */
+  #filterBar{position:sticky;z-index:40;background:var(--page-bg);padding-top:14px;margin-top:-14px;transition:background .25s ease;}
+  #filterBar .card{transition:box-shadow .2s ease, background .25s ease, border-color .25s ease;}
+  #filterBar.is-stuck .card{box-shadow:var(--elev2);}
+
+  /* DATE RANGE DROPDOWN */
+  .date-range-field{position:relative;}
+  .date-range-trigger{
+    display:flex;align-items:center;gap:8px;
+    font-family:'Inter',sans-serif;font-size:13.5px;font-weight:500;
+    padding:11px 14px;border:1.5px solid var(--outline);background:var(--surface-softer);
+    color:var(--on-surface);border-radius:12px;min-width:220px;cursor:pointer;
+    box-shadow:0 1px 2px rgba(20,30,60,.03);
+    transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+  }
+  .date-range-trigger .material-symbols-outlined:first-child{color:var(--primary);}
+  .date-range-trigger span#dateRangeLabel{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .date-range-chevron{font-size:16px;color:var(--on-surface-var);transition:transform .2s ease;}
+  .date-range-trigger:hover{border-color:var(--primary-light);}
+  .date-range-trigger.open .date-range-chevron{transform:rotate(180deg);}
+  .date-range-trigger:disabled{opacity:.5;cursor:default;}
+  .date-range-panel{
+    position:absolute;top:calc(100% + 10px);left:0;min-width:300px;
+    background:var(--surface);border:1px solid var(--outline);border-radius:16px;
+    box-shadow:var(--elev2);padding:14px;z-index:70;
+    opacity:0;visibility:hidden;transform:translateY(-6px);
+    transition:opacity .15s ease, transform .15s ease, visibility .15s, background .25s ease;
+  }
+  .date-range-panel.open{opacity:1;visibility:visible;transform:translateY(0);}
+  .date-range-presets{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .date-range-presets button{
+    font-family:'Inter',sans-serif;font-size:12.5px;font-weight:500;text-align:left;
+    padding:8px 12px;border-radius:9px;border:1px solid transparent;background:var(--surface-soft);
+    color:var(--on-surface);cursor:pointer;transition:background .15s ease,border-color .15s ease,color .15s ease;
+  }
+  .date-range-presets button:hover{background:var(--primary-container);color:var(--primary);}
+  .date-range-presets button.active{background:var(--primary);color:#fff;}
+  .date-range-divider{height:1px;background:var(--outline);margin:12px 0;}
+  .date-range-custom{display:flex;flex-direction:column;gap:10px;}
+  .date-range-custom .field{width:100%;}
+  .date-range-custom select, .date-range-custom input{width:100%;min-width:0;}
+
   /* BUTTONS */
   .btn{
     display:inline-flex;align-items:center;gap:6px;
@@ -444,7 +486,7 @@
 <div class="wrap">
 
   <!-- ITEM / SUPPLIER / DATE FILTERS — placed above the summary so scope is set first -->
-  <div class="section" style="margin-bottom:22px;">
+  <div class="section" id="filterBar" style="margin-bottom:22px;">
     <div class="card" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:18px;">
       <div style="display:flex;gap:16px;flex-wrap:wrap;">
         <div class="field icon-field">
@@ -462,15 +504,37 @@
           <span class="material-symbols-outlined field-icon">local_shipping</span>
           <select id="filterSupplier" disabled><option value="">All suppliers</option></select>
         </div>
-        <div class="field icon-field">
-          <label>From</label>
-          <span class="material-symbols-outlined field-icon">event</span>
-          <input type="date" id="dateFrom" disabled>
-        </div>
-        <div class="field icon-field">
-          <label>To</label>
-          <span class="material-symbols-outlined field-icon">event</span>
-          <input type="date" id="dateTo" disabled>
+        <div class="field date-range-field">
+          <label>Date Range</label>
+          <button type="button" class="date-range-trigger" id="dateRangeTrigger" disabled>
+            <span class="material-symbols-outlined" style="font-size:17px;">event</span>
+            <span id="dateRangeLabel">All time</span>
+            <span class="material-symbols-outlined date-range-chevron">expand_more</span>
+          </button>
+          <div class="date-range-panel" id="dateRangePanel">
+            <div class="date-range-presets" id="dateRangePresets">
+              <button data-preset="all">All time</button>
+              <button data-preset="today">Today</button>
+              <button data-preset="7d">Last 7 days</button>
+              <button data-preset="30d">Last 30 days</button>
+              <button data-preset="thisMonth">This month</button>
+              <button data-preset="lastMonth">Last month</button>
+            </div>
+            <div class="date-range-divider"></div>
+            <div class="date-range-custom">
+              <div class="field icon-field">
+                <label>From</label>
+                <span class="material-symbols-outlined field-icon">event</span>
+                <input type="date" id="dateFrom">
+              </div>
+              <div class="field icon-field">
+                <label>To</label>
+                <span class="material-symbols-outlined field-icon">event</span>
+                <input type="date" id="dateTo">
+              </div>
+              <button class="btn btn-filled" id="applyDateRange" style="width:100%;justify-content:center;margin-top:2px;">Apply</button>
+            </div>
+          </div>
         </div>
       </div>
       <button class="btn btn-text" id="resetFilters">
@@ -595,7 +659,7 @@
   </div>
 
   <footer>
-    <span>300 Limited · Infinite possibilities</span>
+    <span>300 Limited · Infinite possibilities -- v.2.06 by Niloy · </span>
     <span id="footerSource">No file uploaded yet</span>
   </footer>
 </div>
@@ -654,13 +718,13 @@ function loadDataset(records, sourceLabel){
   supSel.innerHTML = '<option value="">All suppliers</option>' + allSuppliers.map(s=>`<option value="${s}">${s}</option>`).join('');
   itemSel.disabled = false; supSel.disabled = false; monthSel.disabled = false;
   document.getElementById('rateSearch').disabled = false;
-  document.getElementById('dateFrom').disabled = false;
-  document.getElementById('dateTo').disabled = false;
+  document.getElementById('dateRangeTrigger').disabled = false;
   state.item=''; state.supplier=''; state.month=''; state.dateFrom=''; state.dateTo='';
   monthSel.value = '';
   document.getElementById('dateFrom').value=''; document.getElementById('dateTo').value='';
   document.getElementById('dateFrom').min = allDates[0]; document.getElementById('dateFrom').max = allDates[allDates.length-1];
   document.getElementById('dateTo').min = allDates[0]; document.getElementById('dateTo').max = allDates[allDates.length-1];
+  setDateRangePreset('all', {silent:true});
 
   const daySel = document.getElementById('daySelect');
   daySel.disabled = false;
@@ -695,21 +759,98 @@ document.getElementById('filterMonth').addEventListener('change', e => {
   renderAll();
 });
 document.getElementById('resetFilters').addEventListener('click', () => {
-  state.item=''; state.supplier=''; state.month=''; state.dateFrom=''; state.dateTo='';
+  state.item=''; state.supplier=''; state.month='';
   document.getElementById('filterItem').value='';
   document.getElementById('filterSupplier').value='';
   document.getElementById('filterMonth').value='';
-  document.getElementById('dateFrom').value='';
-  document.getElementById('dateTo').value='';
   if(allDates.length){
     const daySel = document.getElementById('daySelect');
     daySel.min = allDates[0]; daySel.max = allDates[allDates.length-1];
     daySel.value = allDates[allDates.length-1];
   }
+  setDateRangePreset('all');
+});
+
+/* ---------- date range dropdown: presets + custom range ---------- */
+function ymd(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function addDaysStr(dateStr, n){
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return ymd(d);
+}
+function updateDateRangeLabel(){
+  const label = document.getElementById('dateRangeLabel');
+  if(!state.dateFrom && !state.dateTo){ label.textContent = 'All time'; return; }
+  if(state.dateFrom && state.dateTo){
+    label.textContent = state.dateFrom === state.dateTo ? state.dateFrom : (state.dateFrom + ' → ' + state.dateTo);
+  } else if(state.dateFrom){
+    label.textContent = 'From ' + state.dateFrom;
+  } else {
+    label.textContent = 'Until ' + state.dateTo;
+  }
+}
+function setDateRangePreset(preset, opts){
+  opts = opts || {};
+  const anchor = allDates.length ? allDates[allDates.length-1] : ymd(new Date());
+  let from = '', to = '';
+  if(preset === 'today'){ from = anchor; to = anchor; }
+  else if(preset === '7d'){ from = addDaysStr(anchor, -6); to = anchor; }
+  else if(preset === '30d'){ from = addDaysStr(anchor, -29); to = anchor; }
+  else if(preset === 'thisMonth'){ from = anchor.slice(0,8) + '01'; to = anchor; }
+  else if(preset === 'lastMonth'){
+    const d = new Date(anchor + 'T00:00:00');
+    const firstOfThis = new Date(d.getFullYear(), d.getMonth(), 1);
+    const lastOfPrev = new Date(firstOfThis.getFullYear(), firstOfThis.getMonth(), 0);
+    const firstOfPrev = new Date(lastOfPrev.getFullYear(), lastOfPrev.getMonth(), 1);
+    from = ymd(firstOfPrev); to = ymd(lastOfPrev);
+  }
+  // preset === 'all' leaves from/to empty
+  state.dateFrom = from; state.dateTo = to;
+  document.getElementById('dateFrom').value = from;
+  document.getElementById('dateTo').value = to;
+  document.querySelectorAll('#dateRangePresets button').forEach(b => b.classList.toggle('active', b.dataset.preset === preset));
+  updateDateRangeLabel();
+  document.getElementById('dateRangePanel').classList.remove('open');
+  document.getElementById('dateRangeTrigger').classList.remove('open');
+  if(!opts.silent) renderAll();
+}
+document.querySelectorAll('#dateRangePresets button').forEach(btn => {
+  btn.addEventListener('click', () => setDateRangePreset(btn.dataset.preset));
+});
+document.getElementById('applyDateRange').addEventListener('click', () => {
+  state.dateFrom = document.getElementById('dateFrom').value;
+  state.dateTo = document.getElementById('dateTo').value;
+  document.querySelectorAll('#dateRangePresets button').forEach(b => b.classList.remove('active'));
+  updateDateRangeLabel();
+  document.getElementById('dateRangePanel').classList.remove('open');
+  document.getElementById('dateRangeTrigger').classList.remove('open');
   renderAll();
 });
-document.getElementById('dateFrom').addEventListener('change', e => { state.dateFrom = e.target.value; renderAll(); });
-document.getElementById('dateTo').addEventListener('change', e => { state.dateTo = e.target.value; renderAll(); });
+const dateRangeTrigger = document.getElementById('dateRangeTrigger');
+const dateRangePanel = document.getElementById('dateRangePanel');
+dateRangeTrigger.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const willOpen = !dateRangePanel.classList.contains('open');
+  dateRangePanel.classList.toggle('open', willOpen);
+  dateRangeTrigger.classList.toggle('open', willOpen);
+});
+document.addEventListener('click', (e) => {
+  if(dateRangePanel.classList.contains('open') && !dateRangePanel.contains(e.target) && e.target !== dateRangeTrigger && !dateRangeTrigger.contains(e.target)){
+    dateRangePanel.classList.remove('open');
+    dateRangeTrigger.classList.remove('open');
+  }
+});
+
+/* ---------- sticky filter bar offset (sits just below the app bar) ---------- */
+function positionFilterBar(){
+  const appbar = document.querySelector('.appbar');
+  const filterBar = document.getElementById('filterBar');
+  if(appbar && filterBar) filterBar.style.top = appbar.offsetHeight + 'px';
+}
+window.addEventListener('resize', positionFilterBar);
+window.addEventListener('load', positionFilterBar);
+positionFilterBar();
+
 document.querySelectorAll('#rateSortToggle button').forEach(btn=>{
   btn.addEventListener('click', () => {
     document.querySelectorAll('#rateSortToggle button').forEach(b=>b.classList.remove('active'));
