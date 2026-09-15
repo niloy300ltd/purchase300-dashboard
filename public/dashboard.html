@@ -549,11 +549,26 @@
     </div>
   </div>
 
-  <!-- RATE VARIANCE -->
+  <!-- ITEM RATE VARIANCE CHART -->
   <div class="section">
     <div class="section-head">
-      <div class="section-title"><span class="material-symbols-outlined">price_change</span>Rate Variance — Last 3 Purchases per Item</div>
+      <div class="section-title"><span class="material-symbols-outlined">show_chart</span>Item Rate Variance Chart</div>
+      <div class="section-desc">Uses the Item / Supplier / Month filters above</div>
+    </div>
+    <div class="card">
+      <div id="itemRateChart" style="height:340px;"></div>
+    </div>
+  </div>
+
+  <!-- RATE VARIANCE (combined) -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title"><span class="material-symbols-outlined">price_change</span>Rate Variance</div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <div class="segmented small" id="rateViewToggle">
+          <button class="active" data-view="purchases">Last 3 Purchases</button>
+          <button data-view="months">Last 3 Months</button>
+        </div>
         <div class="segmented small" id="rateSortToggle">
           <button class="active" data-sort="all">All</button>
           <button data-sort="up">Rising</button>
@@ -568,42 +583,12 @@
     <div class="card card-flush">
       <div class="table-scroll" style="max-height:460px;">
         <table>
-          <thead><tr>
+          <thead><tr id="rateVarianceHeadRow">
             <th>Item</th><th>UOM</th>
             <th class="num">Rate on Date</th><th class="num">Rate on Date</th><th class="num">Rate on Date (latest)</th>
             <th class="num">Net Variance</th><th>Trend</th>
           </tr></thead>
           <tbody id="rateTableBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- MONTH TO MONTH RATE VARIANCE -->
-  <div class="section">
-    <div class="section-head">
-      <div class="section-title"><span class="material-symbols-outlined">calendar_month</span>Month-to-Month Rate Variance — Last 3 Months</div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
-        <div class="segmented small" id="monthRateSortToggle">
-          <button class="active" data-sort="all">All</button>
-          <button data-sort="up">Rising</button>
-          <button data-sort="down">Falling</button>
-        </div>
-        <div class="field icon-field" style="min-width:190px;">
-          <span class="material-symbols-outlined field-icon" style="top:50%;">search</span>
-          <input type="text" id="monthRateSearch" placeholder="Search item…" style="width:100%;" disabled>
-        </div>
-      </div>
-    </div>
-    <div class="card card-flush">
-      <div class="table-scroll" style="max-height:460px;">
-        <table>
-          <thead><tr>
-            <th>Item</th><th>UOM</th>
-            <th class="num">Avg Rate (Month)</th><th class="num">Avg Rate (Month)</th><th class="num">Avg Rate (Latest Month)</th>
-            <th class="num">Net Variance</th><th>Trend</th>
-          </tr></thead>
-          <tbody id="monthRateTableBody"></tbody>
         </table>
       </div>
     </div>
@@ -647,7 +632,7 @@ function emptyCard(elId, icon, title, sub){
 /* ---------- global dataset state ---------- */
 let RAW_DATA = [];
 let allDates = [], allItems = [], allSuppliers = [];
-let state = { item:'', supplier:'', month:'', period:'daily', dateFrom:'', dateTo:'', rateSort:'all', monthRateSort:'all', showGrowth:false, autoSlideMovers:true };
+let state = { item:'', supplier:'', month:'', period:'daily', dateFrom:'', dateTo:'', rateSort:'all', rateView:'purchases', showGrowth:false, autoSlideMovers:true };
 let moversUp = [], moversDown = [], moversUpIdx = 0, moversDownIdx = 0, moversUpTimer = null, moversDownTimer = null;
 
 function loadDataset(records, sourceLabel){
@@ -669,7 +654,6 @@ function loadDataset(records, sourceLabel){
   supSel.innerHTML = '<option value="">All suppliers</option>' + allSuppliers.map(s=>`<option value="${s}">${s}</option>`).join('');
   itemSel.disabled = false; supSel.disabled = false; monthSel.disabled = false;
   document.getElementById('rateSearch').disabled = false;
-  document.getElementById('monthRateSearch').disabled = false;
   document.getElementById('dateFrom').disabled = false;
   document.getElementById('dateTo').disabled = false;
   state.item=''; state.supplier=''; state.month=''; state.dateFrom=''; state.dateTo='';
@@ -731,15 +715,15 @@ document.querySelectorAll('#rateSortToggle button').forEach(btn=>{
     document.querySelectorAll('#rateSortToggle button').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     state.rateSort = btn.dataset.sort;
-    renderRateTable(document.getElementById('rateSearch').value);
+    renderRateVarianceSection();
   });
 });
-document.querySelectorAll('#monthRateSortToggle button').forEach(btn=>{
+document.querySelectorAll('#rateViewToggle button').forEach(btn=>{
   btn.addEventListener('click', () => {
-    document.querySelectorAll('#monthRateSortToggle button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('#rateViewToggle button').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    state.monthRateSort = btn.dataset.sort;
-    renderMonthRateTable(document.getElementById('monthRateSearch').value);
+    state.rateView = btn.dataset.view;
+    renderRateVarianceSection();
   });
 });
 
@@ -863,7 +847,7 @@ function renderKPIs(){
   const days = new Set(d.map(r=>r.date)).size;
   const suppliers = new Set(d.map(r=>r.supplier)).size;
   const items = new Set(d.map(r=>r.item)).size;
-  const avgDaily = days ? total/days : 0;
+  const avgPerPurchase = d.length ? total/d.length : 0;
   const has = RAW_DATA.length > 0;
 
   document.getElementById('kpiGrid').innerHTML = `
@@ -873,9 +857,9 @@ function renderKPIs(){
       <div class="kpi-sub">${has?'across filtered records':'no data'}</div>
     </div>
     <div class="kpi-card">
-      <div class="icon-row"><div class="kpi-label">Avg Daily Purchase</div><span class="material-symbols-outlined">calendar_month</span></div>
-      <div class="kpi-value">${has?fmtMoney(avgDaily):'—'}</div>
-      <div class="kpi-sub">${has?days+' active day(s)':'no data'}</div>
+      <div class="icon-row"><div class="kpi-label">Avg Value Per Purchase</div><span class="material-symbols-outlined">calendar_month</span></div>
+      <div class="kpi-value">${has?fmtMoney(avgPerPurchase):'—'}</div>
+      <div class="kpi-sub"></div>
     </div>
     <div class="kpi-card">
       <div class="icon-row"><div class="kpi-label">Order Lines</div><span class="material-symbols-outlined">receipt_long</span></div>
@@ -999,7 +983,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
   if(next === 'dark') document.documentElement.setAttribute('data-theme','dark');
   else document.documentElement.removeAttribute('data-theme');
   try{ localStorage.setItem('purchaseLedgerTheme', next); }catch(e){}
-  if(RAW_DATA.length) renderTrend();
+  if(RAW_DATA.length){ renderTrend(); renderItemRateChart(); }
 });
 
 /* ---------- settings dropdown ---------- */
@@ -1181,7 +1165,7 @@ function renderDay(){
 }
 document.getElementById('daySelect').addEventListener('change', renderDay);
 
-/* ---------- rate variance table: rising/falling filter + movers-first sort ---------- */
+/* ---------- rate variance (combined): Last 3 Purchases / Last 3 Months ---------- */
 function renderRateTable(filterText){
   const has = RAW_DATA.length > 0;
   if(!has){
@@ -1236,9 +1220,7 @@ function renderRateTable(filterText){
 
   document.getElementById('rateTableBody').innerHTML = rows || '<tr><td colspan="7" style="text-align:center;color:var(--on-surface-var);padding:24px;">No items match this filter.</td></tr>';
 }
-document.getElementById('rateSearch').addEventListener('input', e => renderRateTable(e.target.value));
 
-/* ---------- month-to-month rate variance table: avg rate per month, last 3 months ---------- */
 function monthKey(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
 function monthLabel(key){
   const [y,m] = key.split('-').map(Number);
@@ -1248,7 +1230,7 @@ function monthLabel(key){
 function renderMonthRateTable(filterText){
   const has = RAW_DATA.length > 0;
   if(!has){
-    document.getElementById('monthRateTableBody').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="icon-badge"><span class="material-symbols-outlined">calendar_month</span></div><div class="t1">No data</div><div class="t2">Upload an Excel file via Settings to see month-to-month rate variance.</div></div></td></tr>';
+    document.getElementById('rateTableBody').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="icon-badge"><span class="material-symbols-outlined">calendar_month</span></div><div class="t1">No data</div><div class="t2">Upload an Excel file via Settings to see month-to-month rate variance.</div></div></td></tr>';
     return;
   }
 
@@ -1295,7 +1277,7 @@ function renderMonthRateTable(filterText){
     return { item, uom: months[months.length-1].uom, months, netPct, cls };
   }).filter(Boolean);
 
-  if(state.monthRateSort !== 'all') rowData = rowData.filter(r => r.cls === state.monthRateSort);
+  if(state.rateSort !== 'all') rowData = rowData.filter(r => r.cls === state.rateSort);
 
   rowData.sort((a,b) => {
     const aFlat = a.cls==='flat', bFlat = b.cls==='flat';
@@ -1320,17 +1302,88 @@ function renderMonthRateTable(filterText){
     </tr>`;
   }).join('');
 
-  document.getElementById('monthRateTableBody').innerHTML = rows || '<tr><td colspan="7" style="text-align:center;color:var(--on-surface-var);padding:24px;">No items match this filter, or not enough months of data yet.</td></tr>';
+  document.getElementById('rateTableBody').innerHTML = rows || '<tr><td colspan="7" style="text-align:center;color:var(--on-surface-var);padding:24px;">No items match this filter, or not enough months of data yet.</td></tr>';
 }
-document.getElementById('monthRateSearch').addEventListener('input', e => renderMonthRateTable(e.target.value));
+
+function renderRateVarianceSection(){
+  const headRow = document.getElementById('rateVarianceHeadRow');
+  const searchVal = document.getElementById('rateSearch').value;
+  if(state.rateView === 'months'){
+    headRow.innerHTML = '<th>Item</th><th>UOM</th><th class="num">Avg Rate (Month)</th><th class="num">Avg Rate (Month)</th><th class="num">Avg Rate (Latest Month)</th><th class="num">Net Variance</th><th>Trend</th>';
+    renderMonthRateTable(searchVal);
+  } else {
+    headRow.innerHTML = '<th>Item</th><th>UOM</th><th class="num">Rate on Date</th><th class="num">Rate on Date</th><th class="num">Rate on Date (latest)</th><th class="num">Net Variance</th><th>Trend</th>';
+    renderRateTable(searchVal);
+  }
+}
+document.getElementById('rateSearch').addEventListener('input', renderRateVarianceSection);
+
+/* ---------- item rate variance chart: driven by the global Item/Supplier/Month filters ---------- */
+function renderItemRateChart(){
+  const chartEl = document.getElementById('itemRateChart');
+  if(!RAW_DATA.length){
+    emptyCard('itemRateChart', 'show_chart', 'No data', 'Upload an Excel file via Settings to see this chart.');
+    return;
+  }
+  if(!state.item){
+    emptyCard('itemRateChart', 'touch_app', 'Select an item', 'Choose an item from the filters above to see its rate variance over time.');
+    return;
+  }
+  let recs = RAW_DATA.filter(r => r.item === state.item);
+  if(state.supplier) recs = recs.filter(r => r.supplier === state.supplier);
+  if(state.month) recs = recs.filter(r => r.date.slice(0,7) === state.month);
+  recs = recs.slice().sort((a,b)=>a._d-b._d);
+
+  if(recs.length < 2){
+    emptyCard('itemRateChart', 'show_chart', 'Not enough history', 'This item needs at least two purchases (with the current filters) to show a variance trend.');
+    return;
+  }
+
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const upColor = isDark ? '#F1786F' : '#E15B5B';
+  const downColor = isDark ? '#3FD394' : '#26B87A';
+  const lineColor = isDark ? '#5B8DEF' : '#2F6FED';
+  const axisColor = isDark ? '#98A2BE' : '#8A93A6';
+  const gridColor = isDark ? 'rgba(255,255,255,.07)' : 'rgba(20,30,60,.06)';
+
+  const dates = recs.map(r => r.date);
+  const rates = recs.map(r => r.rate);
+  const pct = recs.map((r,i) => i===0 ? 0 : ((r.rate - recs[i-1].rate) / (recs[i-1].rate || 1)) * 100);
+  const barColors = pct.map((p,i) => i===0 ? axisColor : (p>0.05?upColor:(p<-0.05?downColor:axisColor)));
+
+  if(!chartEl.classList.contains('js-plotly-plot')) chartEl.innerHTML = '';
+
+  Plotly.newPlot('itemRateChart', [
+    {
+      x: dates, y: pct, type:'bar', name:'Variance %', yaxis:'y1',
+      marker:{color:barColors},
+      text: pct.map((p,i)=> i===0 ? 'baseline' : fmtPct(p)), textposition:'outside',
+      textfont:{size:10, color:axisColor, family:'Roboto Mono'},
+      hovertemplate:'%{x}<br>%{text}<extra></extra>'
+    },
+    {
+      x: dates, y: rates, type:'scatter', mode:'lines+markers', name:'Rate (৳)', yaxis:'y2',
+      line:{color:lineColor, width:2.5}, marker:{size:6, color:lineColor},
+      hovertemplate:'%{x}<br>৳%{y:,.2f}<extra></extra>'
+    }
+  ], {
+    margin:{t:20,l:55,r:55,b:50},
+    font:{family:'Inter', size:11, color:axisColor},
+    yaxis:{title:'Variance %', ticksuffix:'%', gridcolor:gridColor, zeroline:true, zerolinecolor:gridColor},
+    yaxis2:{title:'Rate (৳)', overlaying:'y', side:'right', gridcolor:'transparent'},
+    xaxis:{tickangle: dates.length>8 ? -30 : 0},
+    legend:{orientation:'h', y:1.14, x:0},
+    plot_bgcolor:'rgba(255,255,255,0)', paper_bgcolor:'rgba(255,255,255,0)'
+  }, {displayModeBar:false, responsive:true});
+}
 
 /* ---------- render all ---------- */
 function renderAll(){
   renderKPIs();
   renderTrend();
   renderDay();
-  renderRateTable(document.getElementById('rateSearch').value);
-  renderMonthRateTable(document.getElementById('monthRateSearch').value);
+  renderItemRateChart();
+  renderRateVarianceSection();
 }
 window.addEventListener('resize', () => { if(RAW_DATA.length) renderTrend(); });
 
