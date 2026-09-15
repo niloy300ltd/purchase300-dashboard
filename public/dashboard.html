@@ -200,7 +200,18 @@
   .date-range-divider{height:1px;background:var(--outline);margin:12px 0;}
   .date-range-custom{display:flex;flex-direction:column;gap:10px;}
   .date-range-custom .field{width:100%;}
-  .date-range-custom select, .date-range-custom input{width:100%;min-width:0;}
+  .date-range-custom select, .date-range-custom input{width:100%;min-width:0;padding-right:42px;}
+  .date-pick-btn{
+    position:absolute;right:6px;top:calc(50% + 9px);transform:translateY(-50%);
+    width:28px;height:28px;border-radius:8px;border:none;cursor:pointer;
+    background:var(--primary-container);color:var(--primary);
+    display:flex;align-items:center;justify-content:center;padding:0;
+    transition:background .15s ease, transform .12s ease;
+  }
+  .date-pick-btn .material-symbols-outlined{font-size:16px;}
+  .date-pick-btn:hover{background:var(--primary);color:#fff;}
+  .date-pick-btn:active{transform:translateY(-50%) scale(.9);}
+  #dateFrom::-webkit-calendar-picker-indicator, #dateTo::-webkit-calendar-picker-indicator{opacity:0;position:absolute;right:0;top:0;width:42px;height:100%;margin:0;}
 
   /* BUTTONS */
   .btn{
@@ -526,11 +537,17 @@
                 <label>From</label>
                 <span class="material-symbols-outlined field-icon">event</span>
                 <input type="date" id="dateFrom">
+                <button type="button" class="date-pick-btn" data-target="dateFrom" aria-label="Open calendar">
+                  <span class="material-symbols-outlined">calendar_month</span>
+                </button>
               </div>
               <div class="field icon-field">
                 <label>To</label>
                 <span class="material-symbols-outlined field-icon">event</span>
                 <input type="date" id="dateTo">
+                <button type="button" class="date-pick-btn" data-target="dateTo" aria-label="Open calendar">
+                  <span class="material-symbols-outlined">calendar_month</span>
+                </button>
               </div>
               <button class="btn btn-filled" id="applyDateRange" style="width:100%;justify-content:center;margin-top:2px;">Apply</button>
             </div>
@@ -620,6 +637,7 @@
       <div class="section-desc">Uses the Item / Supplier / Month filters above</div>
     </div>
     <div class="card">
+      <div class="section-desc" id="itemRateChartNote" style="margin-bottom:10px;"></div>
       <div id="itemRateChart" style="height:340px;"></div>
     </div>
   </div>
@@ -659,7 +677,7 @@
   </div>
 
   <footer>
-    <span>300 Limited · Infinite possibilities -- v.2.06 by Niloy · </span>
+    <span>300 Limited · Infinite possibilities</span>
     <span id="footerSource">No file uploaded yet</span>
   </footer>
 </div>
@@ -825,6 +843,14 @@ document.getElementById('applyDateRange').addEventListener('click', () => {
   document.getElementById('dateRangePanel').classList.remove('open');
   document.getElementById('dateRangeTrigger').classList.remove('open');
   renderAll();
+});
+document.querySelectorAll('.date-pick-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const input = document.getElementById(btn.dataset.target);
+    if(input.showPicker){ try{ input.showPicker(); }catch(err){ input.focus(); } }
+    else { input.focus(); input.click(); }
+  });
 });
 const dateRangeTrigger = document.getElementById('dateRangeTrigger');
 const dateRangePanel = document.getElementById('dateRangePanel');
@@ -1460,25 +1486,59 @@ function renderRateVarianceSection(){
 document.getElementById('rateSearch').addEventListener('input', renderRateVarianceSection);
 
 /* ---------- item rate variance chart: driven by the global Item/Supplier/Month filters ---------- */
+function topRisingItem(){
+  const byItem = new Map();
+  RAW_DATA.forEach(r => {
+    if(state.supplier && r.supplier !== state.supplier) return;
+    if(state.month && r.date.slice(0,7) !== state.month) return;
+    if(!byItem.has(r.item)) byItem.set(r.item, []);
+    byItem.get(r.item).push(r);
+  });
+  let best = null;
+  byItem.forEach((arr, item) => {
+    const hist = arr.slice().sort((a,b)=>a._d-b._d);
+    const last3 = hist.slice(-3);
+    if(last3.length < 2) return;
+    const first = last3[0].rate, last = last3[last3.length-1].rate;
+    const netPct = first ? ((last-first)/first)*100 : 0;
+    if(netPct > 0.05 && (!best || netPct > best.netPct)) best = { item, netPct };
+  });
+  return best ? best.item : null;
+}
+
 function renderItemRateChart(){
   const chartEl = document.getElementById('itemRateChart');
+  const noteEl = document.getElementById('itemRateChartNote');
   if(!RAW_DATA.length){
+    noteEl.textContent = '';
     emptyCard('itemRateChart', 'show_chart', 'No data', 'Upload an Excel file via Settings to see this chart.');
     return;
   }
-  if(!state.item){
-    emptyCard('itemRateChart', 'touch_app', 'Select an item', 'Choose an item from the filters above to see its rate variance over time.');
+  let effectiveItem = state.item;
+  let autoSelected = false;
+  if(!effectiveItem){
+    effectiveItem = topRisingItem();
+    autoSelected = true;
+  }
+  if(!effectiveItem){
+    noteEl.textContent = '';
+    emptyCard('itemRateChart', 'touch_app', 'No rising item to show', 'Choose an item from the filters above, or there is no rising item yet with the current filters.');
     return;
   }
-  let recs = RAW_DATA.filter(r => r.item === state.item);
+  let recs = RAW_DATA.filter(r => r.item === effectiveItem);
   if(state.supplier) recs = recs.filter(r => r.supplier === state.supplier);
   if(state.month) recs = recs.filter(r => r.date.slice(0,7) === state.month);
   recs = recs.slice().sort((a,b)=>a._d-b._d);
 
   if(recs.length < 2){
+    noteEl.textContent = '';
     emptyCard('itemRateChart', 'show_chart', 'Not enough history', 'This item needs at least two purchases (with the current filters) to show a variance trend.');
     return;
   }
+
+  noteEl.innerHTML = autoSelected
+    ? `<span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px;color:var(--error);">trending_up</span> Showing highest rising item: <strong style="color:var(--on-surface);">${effectiveItem}</strong> — select an item above to pin a specific one.`
+    : '';
 
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const upColor = isDark ? '#F1786F' : '#E15B5B';
@@ -1491,29 +1551,44 @@ function renderItemRateChart(){
   const rates = recs.map(r => r.rate);
   const pct = recs.map((r,i) => i===0 ? 0 : ((r.rate - recs[i-1].rate) / (recs[i-1].rate || 1)) * 100);
   const barColors = pct.map((p,i) => i===0 ? axisColor : (p>0.05?upColor:(p<-0.05?downColor:axisColor)));
+  // Only label bars with an actual change — labelling every near-zero bar makes the chart unreadable when there are many purchase points.
+  const barText = pct.map((p,i) => i===0 ? 'baseline' : (Math.abs(p) > 0.05 ? fmtPct(p) : ''));
+  const hoverText = pct.map((p,i) => i===0 ? 'baseline' : (Math.abs(p) > 0.05 ? fmtPct(p) : 'no change'));
 
   if(!chartEl.classList.contains('js-plotly-plot')) chartEl.innerHTML = '';
+
+  // Cap the number of x-axis tick labels shown so dates don't overlap into unreadable clutter.
+  const maxTicks = 14;
+  const tickStep = Math.max(1, Math.ceil(dates.length / maxTicks));
+  const tickvals = dates.filter((_, i) => i % tickStep === 0);
 
   Plotly.newPlot('itemRateChart', [
     {
       x: dates, y: pct, type:'bar', name:'Variance %', yaxis:'y1',
-      marker:{color:barColors},
-      text: pct.map((p,i)=> i===0 ? 'baseline' : fmtPct(p)), textposition:'outside',
+      marker:{color:barColors, line:{color:barColors, width:1}},
+      text: barText, textposition:'outside',
       textfont:{size:10, color:axisColor, family:'Roboto Mono'},
-      hovertemplate:'%{x}<br>%{text}<extra></extra>'
+      customdata: hoverText,
+      hovertemplate:'%{x}<br>%{customdata}<extra></extra>'
     },
     {
       x: dates, y: rates, type:'scatter', mode:'lines+markers', name:'Rate (৳)', yaxis:'y2',
-      line:{color:lineColor, width:2.5}, marker:{size:6, color:lineColor},
+      line:{color:lineColor, width:2.5}, marker:{size:5, color:lineColor},
       hovertemplate:'%{x}<br>৳%{y:,.2f}<extra></extra>'
     }
   ], {
-    margin:{t:20,l:55,r:55,b:50},
+    margin:{t:20,l:55,r:55,b:60},
     font:{family:'Inter', size:11, color:axisColor},
     yaxis:{title:'Variance %', ticksuffix:'%', gridcolor:gridColor, zeroline:true, zerolinecolor:gridColor},
     yaxis2:{title:'Rate (৳)', overlaying:'y', side:'right', gridcolor:'transparent'},
-    xaxis:{tickangle: dates.length>8 ? -30 : 0},
-    legend:{orientation:'h', y:1.14, x:0},
+    xaxis:{
+      tickangle: -35,
+      type:'category',
+      tickvals: tickvals,
+      automargin:true
+    },
+    bargap: dates.length > 40 ? 0.15 : 0.3,
+    legend:{orientation:'h', y:1.16, x:0},
     plot_bgcolor:'rgba(255,255,255,0)', paper_bgcolor:'rgba(255,255,255,0)'
   }, {displayModeBar:false, responsive:true});
 }
