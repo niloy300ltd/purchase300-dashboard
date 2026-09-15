@@ -206,12 +206,13 @@
   .cs-panel{min-width:260px;max-width:320px;padding:10px;}
   .cs-search-wrap{position:relative;margin-bottom:8px;}
   .cs-search-wrap .material-symbols-outlined{
-    position:absolute;left:10px;top:50%;transform:translateY(-50%);
-    font-size:16px;color:var(--on-surface-var);pointer-events:none;
+    position:absolute;left:12px;top:50%;transform:translateY(-50%);
+    font-size:16px;color:var(--on-surface-var);pointer-events:none;line-height:1;
   }
   .cs-search{
-    width:100%;padding:9px 12px 9px 34px;border:1.5px solid var(--outline);border-radius:10px;
+    width:100%;padding:10px 12px 10px 40px;border:1.5px solid var(--outline);border-radius:10px;
     background:var(--surface-softer);color:var(--on-surface);font-family:'Inter',sans-serif;font-size:13px;
+    box-sizing:border-box;
   }
   .cs-search:focus{outline:none;border-color:var(--primary);}
   .cs-options{max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;}
@@ -823,10 +824,13 @@ function setDropdownValue(key, value, labelText){
     opt.classList.toggle('active', opt.dataset.value === value);
   });
 }
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 function populateDropdown(key, values, allLabel, labelFn){
   const optionsEl = document.getElementById(key + 'Options');
-  const rows = [`<div class="cs-option active" data-value="">${allLabel}</div>`]
-    .concat(values.map(v => `<div class="cs-option" data-value="${v}">${labelFn ? labelFn(v) : v}</div>`));
+  const rows = [`<div class="cs-option active" data-value="">${escapeHtml(allLabel)}</div>`]
+    .concat(values.map(v => `<div class="cs-option" data-value="${escapeHtml(v)}">${escapeHtml(labelFn ? labelFn(v) : v)}</div>`));
   optionsEl.innerHTML = rows.join('');
   document.getElementById(key + 'Trigger').disabled = false;
 }
