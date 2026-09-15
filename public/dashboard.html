@@ -433,6 +433,17 @@
   tbody tr:hover{background:var(--table-head-bg);}
   .num{text-align:right;font-family:'Roboto Mono',monospace;}
   .table-scroll{max-height:460px;overflow-y:auto;}
+  tfoot td, tfoot th{
+    padding:13px 16px;font-weight:700;color:var(--on-surface);
+    background:var(--table-head-bg);position:sticky;bottom:0;
+    border-top:2px solid var(--outline);
+  }
+  #priceCompareTable th.sticky-col, #priceCompareTable td.sticky-col{
+    position:sticky;left:0;background:var(--surface);z-index:2;
+    box-shadow:2px 0 4px rgba(20,30,60,.05);
+  }
+  #priceCompareTable thead th.sticky-col{background:var(--table-head-bg);z-index:3;}
+  #priceCompareTable tfoot td.sticky-col{background:var(--table-head-bg);z-index:3;}
 
   .cell-datecell{display:flex;flex-direction:column;gap:1px;}
   .cell-date{font-size:11.5px;font-weight:600;color:var(--on-surface);}
@@ -694,6 +705,29 @@
     </div>
   </div>
 
+  <!-- MONTHLY ITEM PRICE COMPARISON -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title"><span class="material-symbols-outlined">grid_view</span>Monthly Item Price Comparison</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <div class="field icon-field" style="min-width:190px;">
+          <span class="material-symbols-outlined field-icon" style="top:50%;">search</span>
+          <input type="text" id="priceCompareSearch" placeholder="Search item…" style="width:100%;" disabled>
+        </div>
+      </div>
+    </div>
+    <div class="section-desc" style="margin-bottom:12px;">Average rate per item, side by side across months. Ignores the Month filter above so all months stay visible; respects the Item and Supplier filters.</div>
+    <div class="card card-flush">
+      <div class="table-scroll" style="max-height:520px;overflow-x:auto;">
+        <table id="priceCompareTable">
+          <thead><tr id="priceCompareHeadRow"></tr></thead>
+          <tbody id="priceCompareBody"></tbody>
+          <tfoot><tr id="priceCompareTotalRow"></tr></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <!-- RATE VARIANCE (combined) -->
   <div class="section">
     <div class="section-head">
@@ -788,6 +822,7 @@ function loadDataset(records, sourceLabel){
   populateDropdown('filterItem', allItems, 'All items');
   populateDropdown('filterSupplier', allSuppliers, 'All suppliers');
   document.getElementById('rateSearch').disabled = false;
+  document.getElementById('priceCompareSearch').disabled = false;
   document.getElementById('dateRangeTrigger').disabled = false;
   state.item=''; state.supplier=''; state.month=''; state.dateFrom=''; state.dateTo='';
   setDropdownValue('filterMonth', '', 'All months');
@@ -1604,6 +1639,70 @@ function renderRateVarianceSection(){
 }
 document.getElementById('rateSearch').addEventListener('input', renderRateVarianceSection);
 
+/* ---------- monthly item price comparison: item x month pivot with totals row ---------- */
+function renderPriceCompareTable(filterText){
+  const headRow = document.getElementById('priceCompareHeadRow');
+  const body = document.getElementById('priceCompareBody');
+  const totalRow = document.getElementById('priceCompareTotalRow');
+
+  if(!RAW_DATA.length){
+    headRow.innerHTML = '';
+    totalRow.innerHTML = '';
+    body.innerHTML = '<tr><td><div class="empty-state"><div class="icon-badge"><span class="material-symbols-outlined">grid_view</span></div><div class="t1">No data</div><div class="t2">Upload an Excel file via Settings to see this report.</div></div></td></tr>';
+    return;
+  }
+
+  let data = RAW_DATA;
+  if(state.supplier) data = data.filter(r => r.supplier === state.supplier);
+  if(state.item) data = data.filter(r => r.item === state.item);
+
+  const allMonthsHere = [...new Set(data.map(r => r.date.slice(0,7)))].sort();
+  if(!allMonthsHere.length){
+    headRow.innerHTML = '';
+    totalRow.innerHTML = '';
+    body.innerHTML = '<tr><td><div class="empty-state"><div class="icon-badge"><span class="material-symbols-outlined">grid_view</span></div><div class="t1">No matching purchases</div><div class="t2">Try a different item or supplier filter.</div></div></td></tr>';
+    return;
+  }
+
+  const byItem = new Map();
+  data.forEach(r => {
+    if(!byItem.has(r.item)) byItem.set(r.item, new Map());
+    const monthMap = byItem.get(r.item);
+    const mk = r.date.slice(0,7);
+    if(!monthMap.has(mk)) monthMap.set(mk, { qty:0, amount:0 });
+    const m = monthMap.get(mk);
+    m.qty += (r.qty || 0);
+    m.amount += (r.amount || 0);
+  });
+
+  let items = [...byItem.keys()].sort();
+  if(filterText) items = items.filter(i => i.toLowerCase().includes(filterText.toLowerCase()));
+
+  headRow.innerHTML = '<th class="sticky-col">Item</th>' + allMonthsHere.map(mk => `<th class="num">${monthLabel(mk)}</th>`).join('');
+
+  const rows = items.map(item => {
+    const monthMap = byItem.get(item);
+    const cells = allMonthsHere.map(mk => {
+      const m = monthMap.get(mk);
+      if(!m || m.qty <= 0) return '<td class="num" style="color:var(--on-surface-var);">—</td>';
+      return `<td class="num">৳${fmtNum(m.amount / m.qty)}</td>`;
+    }).join('');
+    return `<tr><td class="sticky-col">${item}</td>${cells}</tr>`;
+  }).join('');
+  body.innerHTML = rows || '<tr><td><div class="empty-state"><div class="icon-badge"><span class="material-symbols-outlined">search_off</span></div><div class="t1">No items match this search</div></div></td></tr>';
+
+  const totals = allMonthsHere.map(mk => {
+    let sum = 0;
+    items.forEach(item => {
+      const m = byItem.get(item).get(mk);
+      if(m && m.qty > 0) sum += (m.amount / m.qty);
+    });
+    return sum;
+  });
+  totalRow.innerHTML = '<td class="sticky-col">Total</td>' + totals.map(t => `<td class="num">৳${fmtNum(t)}</td>`).join('');
+}
+document.getElementById('priceCompareSearch').addEventListener('input', e => renderPriceCompareTable(e.target.value));
+
 /* ---------- item rate variance chart: driven by the global Item/Supplier/Month filters ---------- */
 function renderItemRateChart(){
   const chartEl = document.getElementById('itemRateChart');
@@ -1699,6 +1798,7 @@ function renderAll(){
   renderDay();
   renderItemRateChart();
   renderRateVarianceSection();
+  renderPriceCompareTable(document.getElementById('priceCompareSearch').value);
 }
 window.addEventListener('resize', () => { if(RAW_DATA.length) renderTrend(); });
 
