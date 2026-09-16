@@ -653,10 +653,17 @@
   <div class="section">
     <div class="section-head">
       <div class="section-title"><span class="material-symbols-outlined">today</span>Selected Day</div>
-      <div class="field icon-field" style="min-width:170px;">
-        <label>Date</label>
-        <span class="material-symbols-outlined field-icon">event</span>
-        <input type="date" id="daySelect" disabled>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <div class="segmented small" id="daySortToggle">
+          <button class="active" data-sort="all">All</button>
+          <button data-sort="up">Rising</button>
+          <button data-sort="down">Falling</button>
+        </div>
+        <div class="field icon-field" style="min-width:170px;">
+          <label>Date</label>
+          <span class="material-symbols-outlined field-icon">event</span>
+          <input type="date" id="daySelect" disabled>
+        </div>
       </div>
     </div>
     <div class="card" style="padding-bottom:0;">
@@ -804,7 +811,7 @@ function emptyCard(elId, icon, title, sub){
 /* ---------- global dataset state ---------- */
 let RAW_DATA = [];
 let allDates = [], allItems = [], allSuppliers = [];
-let state = { item:'', supplier:'', month:'', period:'daily', dateFrom:'', dateTo:'', rateSort:'all', rateView:'purchases', showGrowth:false, autoSlideMovers:true };
+let state = { item:'', supplier:'', month:'', period:'daily', dateFrom:'', dateTo:'', rateSort:'all', rateView:'purchases', daySort:'all', showGrowth:false, autoSlideMovers:true };
 let moversUp = [], moversDown = [], moversUpIdx = 0, moversDownIdx = 0, moversUpTimer = null, moversDownTimer = null;
 
 function loadDataset(records, sourceLabel){
@@ -1469,6 +1476,8 @@ function renderDay(){
     return Math.abs(b.pct||0) - Math.abs(a.pct||0);
   });
 
+  if(state.daySort !== 'all') rowData = rowData.filter(row => row.cls === state.daySort);
+
   const rows = rowData.map(({r, prev, pct, cls}) => {
     const variance = pct===null ? '<span class="chip flat">first record</span>' : `<span class="chip ${cls}">${fmtPct(pct)}</span>`;
     const lastPurchaseCell = prev
@@ -1482,9 +1491,20 @@ function renderDay(){
       <td class="num">${variance}</td>
     </tr>`;
   }).join('');
-  document.getElementById('dayTableBody').innerHTML = rows || '<tr><td colspan="8" style="text-align:center;color:var(--on-surface-var);padding:24px;">No purchases on this day for current filters.</td></tr>';
+  const emptyMsg = state.daySort === 'up' ? 'No items with a rising rate on this day for current filters.'
+    : state.daySort === 'down' ? 'No items with a falling rate on this day for current filters.'
+    : 'No purchases on this day for current filters.';
+  document.getElementById('dayTableBody').innerHTML = rows || `<tr><td colspan="8" style="text-align:center;color:var(--on-surface-var);padding:24px;">${emptyMsg}</td></tr>`;
 }
 document.getElementById('daySelect').addEventListener('change', renderDay);
+document.querySelectorAll('#daySortToggle button').forEach(btn=>{
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#daySortToggle button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    state.daySort = btn.dataset.sort;
+    renderDay();
+  });
+});
 
 /* ---------- rate variance (combined): Last 3 Purchases / Last 3 Months ---------- */
 function renderRateTable(filterText){
