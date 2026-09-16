@@ -1461,7 +1461,7 @@ function renderDay(){
     growthEl.textContent = 'n/a'; growthSub.textContent = 'no earlier date';
   }
 
-  const rowData = d.map(r => {
+  let rowData = d.map(r => {
     const prev = prevPurchaseForItem(r.item, r._d);
     let pct = null, cls = 'flat';
     if(prev && prev.rate !== null && prev.rate !== 0){
