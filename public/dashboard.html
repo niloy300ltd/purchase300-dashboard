@@ -4,151 +4,95 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Purchase Ledger — 300 Limited</title>
-<script>
-  (function(){
-    try{
-      var saved = localStorage.getItem('purchaseLedgerTheme');
-      var theme = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      if(theme === 'dark') document.documentElement.setAttribute('data-theme','dark');
-    }catch(e){}
-  })();
-</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.32.0/plotly.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
 <style>
   :root{
-    --primary:#2F6FED;
-    --primary-dark:#1E4FC4;
-    --primary-light:#5B8DEF;
-    --primary-container:rgba(47,111,237,.10);
+    --primary:#1E3A8A;
+    --primary-dark:#0B2159;
+    --primary-light:#3D5FD1;
+    --primary-container:rgba(30,58,138,.13);
     --on-primary:#FFFFFF;
-    --secondary:#F5A623;
-    --secondary-container:rgba(245,166,35,.14);
-    --gold:#F5A623;
-    --gold-dark:#C97F0C;
-    --gold-container:rgba(245,166,35,.14);
-    --on-surface:#1B2233;
-    --on-surface-var:#8A93A6;
-    --outline:#EEF1F6;
-    --outline-soft:#F3F5F9;
-    --error:#E15B5B;
-    --error-container:#FDECEC;
-    --success:#26B87A;
-    --success-container:#E5F8EF;
-    --page-bg:#F6F8FC;
-    --surface:#FFFFFF;
-    --surface-soft:#F6F8FC;
-    --surface-softer:#FBFCFE;
-    --table-head-bg:#FAFBFD;
-    --select-arrow:%238A93A6;
-    --glass-bg:#FFFFFF;
-    --glass-bg-strong:#FFFFFF;
-    --glass-border:#EEF1F6;
-    --elev1: 0 1px 2px rgba(20,30,60,.04), 0 8px 24px rgba(20,30,60,.06);
-    --elev2: 0 2px 4px rgba(20,30,60,.05), 0 16px 36px rgba(20,30,60,.10);
-    --elev-press: inset 0 2px 6px rgba(20,30,60,.08);
-    --radius-lg:20px;
+    --secondary:#0D9488;
+    --secondary-container:rgba(13,148,136,.15);
+    --gold:#B8873A;
+    --gold-dark:#8F6423;
+    --gold-container:rgba(184,135,58,.16);
+    --on-surface:#101828;
+    --on-surface-var:#586279;
+    --outline:rgba(16,33,89,.15);
+    --outline-soft:rgba(16,33,89,.08);
+    --error:#B3261E;
+    --error-container:#F9DEDC;
+    --success:#166A3E;
+    --success-container:#D9F0DF;
+    --glass-bg:rgba(255,255,255,.58);
+    --glass-bg-strong:rgba(255,255,255,.78);
+    --glass-border:rgba(255,255,255,.75);
+    --elev1: 0 1px 1px rgba(11,33,89,.05), 0 10px 26px rgba(11,33,89,.14), inset 0 1px 0 rgba(255,255,255,.55);
+    --elev2: 0 2px 3px rgba(11,33,89,.07), 0 20px 44px rgba(11,33,89,.22), inset 0 1px 0 rgba(255,255,255,.65);
+    --elev-press: inset 0 2px 6px rgba(11,33,89,.18);
+    --radius-lg:22px;
     --radius-md:16px;
-  }
-  html[data-theme="dark"]{
-    --primary:#5B8DEF;
-    --primary-dark:#7BA3F5;
-    --primary-light:#8FB3FF;
-    --primary-container:rgba(91,141,239,.18);
-    --on-primary:#0B0F19;
-    --secondary:#FFB84D;
-    --secondary-container:rgba(255,184,77,.16);
-    --gold:#FFB84D;
-    --gold-dark:#FFC876;
-    --gold-container:rgba(255,184,77,.16);
-    --on-surface:#EDEFF7;
-    --on-surface-var:#98A2BE;
-    --outline:rgba(255,255,255,.09);
-    --outline-soft:rgba(255,255,255,.05);
-    --error:#F1786F;
-    --error-container:rgba(241,120,111,.16);
-    --success:#3FD394;
-    --success-container:rgba(63,211,148,.14);
-    --page-bg:#0A0E1A;
-    --surface:#141A2E;
-    --surface-soft:#1A2138;
-    --surface-softer:#111629;
-    --table-head-bg:#171E36;
-    --select-arrow:%2398A2BE;
-    --elev1: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
-    --elev2: 0 2px 4px rgba(0,0,0,.35), 0 20px 44px rgba(0,0,0,.45);
-    --elev-press: inset 0 2px 6px rgba(0,0,0,.4);
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
-  html{transition:background .25s ease;}
   body{
     min-height:100vh;
     color:var(--on-surface);
-    font-family:'Inter',sans-serif;
+    font-family:'Roboto',sans-serif;
     -webkit-font-smoothing:antialiased;
-    background:var(--page-bg);
+    background:
+      radial-gradient(circle at 10% 6%, rgba(255,255,255,.95) 0%, rgba(255,255,255,0) 30%),
+      radial-gradient(circle at 90% 12%, rgba(184,135,58,.16) 0%, rgba(184,135,58,0) 34%),
+      radial-gradient(circle at 88% 78%, rgba(13,148,136,.14) 0%, rgba(13,148,136,0) 36%),
+      radial-gradient(circle at 14% 90%, rgba(61,95,209,.16) 0%, rgba(61,95,209,0) 40%),
+      linear-gradient(165deg, #F2F5FC 0%, #E7ECF8 38%, #DCE3F4 72%, #D3DCF1 100%);
     background-attachment:fixed;
-    transition:background .25s ease, color .25s ease;
   }
   .material-symbols-outlined{
     font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
     font-size:20px; vertical-align:middle; line-height:1;
   }
 
-  /* APP BAR — clean header, like a SaaS product bar */
+  /* APP BAR — solid, the one bold element against the frosted page */
   .appbar{
-    background:var(--surface);
-    color:var(--on-surface);
-    box-shadow:0 1px 0 var(--outline), 0 6px 20px rgba(20,30,60,.04);
-    padding:20px 48px;
+    background:linear-gradient(120deg, var(--primary-light) 0%, var(--primary) 46%, var(--primary-dark) 100%);
+    color:var(--on-primary);
+    box-shadow:0 1px 0 rgba(255,255,255,.18) inset, 0 10px 30px rgba(11,33,89,.38);
+    padding:22px 48px;
     display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;
     position:sticky;top:0;z-index:50;
-    border-bottom:1px solid var(--outline);
-    transition:background .25s ease, border-color .25s ease;
+    border-bottom:1px solid rgba(184,135,58,.55);
   }
   .appbar-title{display:flex;flex-direction:column;gap:3px;}
-  .appbar-eyebrow{font-size:11.5px;letter-spacing:.08em;opacity:.85;font-weight:600;color:var(--primary);}
-  .appbar-title h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-0.02em;color:var(--on-surface);}
-  .appbar-meta{font-size:12px;color:var(--on-surface-var);display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
+  .appbar-eyebrow{font-size:11.5px;letter-spacing:.08em;opacity:.85;font-weight:500;color:#E8CE9C;}
+  .appbar-title h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-0.01em;text-shadow:0 2px 8px rgba(0,0,0,.18);}
+  .appbar-meta{font-size:12px;opacity:.92;display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
   .appbar-meta span{display:flex;align-items:center;gap:4px;}
-
-  /* THEME TOGGLE */
-  .theme-toggle{
-    width:34px;height:34px;border-radius:50%;border:1px solid var(--outline);
-    background:var(--surface-soft);color:var(--on-surface-var);cursor:pointer;
-    display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;
-    transition:background .15s ease, color .15s ease, transform .12s ease;
-  }
-  .theme-toggle:hover{background:var(--primary-container);color:var(--primary);}
-  .theme-toggle:active{transform:scale(.92);}
-  .theme-toggle .material-symbols-outlined{font-size:19px;position:absolute;transition:opacity .25s ease, transform .35s ease;}
-  .theme-toggle .icon-sun{opacity:0;transform:rotate(-60deg) scale(.4);}
-  .theme-toggle .icon-moon{opacity:1;transform:rotate(0) scale(1);}
-  html[data-theme="dark"] .theme-toggle .icon-sun{opacity:1;transform:rotate(0) scale(1);}
-  html[data-theme="dark"] .theme-toggle .icon-moon{opacity:0;transform:rotate(60deg) scale(.4);}
 
   /* SETTINGS ICON + DROPDOWN */
   .settings-wrap{position:relative;}
   .icon-btn{
-    width:34px;height:34px;border-radius:50%;border:1px solid var(--outline);
-    background:var(--surface-soft);color:var(--on-surface-var);cursor:pointer;
+    width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.28);
+    background:rgba(255,255,255,.14);color:#fff;cursor:pointer;
     display:flex;align-items:center;justify-content:center;
-    transition:background .15s ease, transform .12s ease, color .15s ease;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.25);
+    transition:background .15s ease, transform .12s ease;
   }
-  .icon-btn:hover{background:var(--primary-container);color:var(--primary);}
+  .icon-btn:hover{background:rgba(255,255,255,.26);}
   .icon-btn:active{transform:scale(.92);}
   .icon-btn .material-symbols-outlined{font-size:19px;}
   .settings-panel{
     position:absolute;top:calc(100% + 10px);right:0;min-width:260px;
-    background:var(--surface);
-    border:1px solid var(--outline);border-radius:14px;
-    box-shadow:var(--elev2);
+    background:rgba(255,255,255,.96);backdrop-filter:blur(16px) saturate(180%);
+    border:1px solid rgba(255,255,255,.8);border-radius:14px;
+    box-shadow:0 16px 40px rgba(11,33,89,.28);
     padding:14px 16px;color:var(--on-surface);
     opacity:0;visibility:hidden;transform:translateY(-6px);
-    transition:opacity .15s ease, transform .15s ease, visibility .15s, background .25s ease;
+    transition:opacity .15s ease, transform .15s ease, visibility .15s;
     z-index:60;
   }
   .settings-panel.open{opacity:1;visibility:visible;transform:translateY(0);}
@@ -158,124 +102,60 @@
   .settings-divider{height:1px;background:var(--outline);margin:10px 0;}
   .settings-upload-status{font-size:11.5px;color:var(--on-surface-var);margin-bottom:8px;word-break:break-all;}
 
-  .wrap{width:100%;padding:36px 48px 110px;}
-
-  /* STICKY FILTER BAR */
-  #filterBar{position:sticky;z-index:40;background:var(--page-bg);padding-top:14px;margin-top:-14px;transition:background .25s ease;}
-  #filterBar .card{transition:box-shadow .2s ease, background .25s ease, border-color .25s ease;}
-  #filterBar.is-stuck .card{box-shadow:var(--elev2);}
-
-  /* DATE RANGE DROPDOWN */
-  .date-range-field{position:relative;}
-  .date-range-trigger{
-    display:flex;align-items:center;gap:8px;
-    font-family:'Inter',sans-serif;font-size:13.5px;font-weight:500;
-    padding:11px 14px;border:1.5px solid var(--outline);background:var(--surface-softer);
-    color:var(--on-surface);border-radius:12px;min-width:220px;cursor:pointer;
-    box-shadow:0 1px 2px rgba(20,30,60,.03);
-    transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
-  }
-  .date-range-trigger .material-symbols-outlined:first-child{color:var(--primary);}
-  .date-range-trigger span#dateRangeLabel{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .date-range-chevron{font-size:16px;color:var(--on-surface-var);transition:transform .2s ease;}
-  .date-range-trigger:hover{border-color:var(--primary-light);}
-  .date-range-trigger.open .date-range-chevron{transform:rotate(180deg);}
-  .date-range-trigger:disabled{opacity:.5;cursor:default;}
-  .date-range-panel{
-    position:absolute;top:calc(100% + 10px);left:0;min-width:300px;
-    background:var(--surface);border:1px solid var(--outline);border-radius:16px;
-    box-shadow:var(--elev2);padding:14px;z-index:70;
-    opacity:0;visibility:hidden;transform:translateY(-6px);
-    transition:opacity .15s ease, transform .15s ease, visibility .15s, background .25s ease;
-  }
-  .date-range-panel.open{opacity:1;visibility:visible;transform:translateY(0);}
-  .date-range-presets{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-  .date-range-presets button{
-    font-family:'Inter',sans-serif;font-size:12.5px;font-weight:500;text-align:left;
-    padding:8px 12px;border-radius:9px;border:1px solid transparent;background:var(--surface-soft);
-    color:var(--on-surface);cursor:pointer;transition:background .15s ease,border-color .15s ease,color .15s ease;
-  }
-  .date-range-presets button:hover{background:var(--primary-container);color:var(--primary);}
-  .date-range-presets button.active{background:var(--primary);color:#fff;}
-  .date-range-divider{height:1px;background:var(--outline);margin:12px 0;}
-  .date-range-custom{display:flex;flex-direction:column;gap:10px;}
-  .date-range-custom .field{width:100%;}
-  .date-range-custom select, .date-range-custom input{width:100%;min-width:0;padding-right:42px;}
-
-  /* CUSTOM SELECT DROPDOWN (Month / Item / Supplier) — replaces native <select> entirely to avoid browser-native arrow rendering quirks */
-  .cs-panel{min-width:260px;max-width:320px;padding:10px;}
-  .cs-search-wrap{position:relative;margin-bottom:8px;}
-  .cs-search-wrap .material-symbols-outlined{
-    position:absolute;left:12px;top:50%;transform:translateY(-50%);
-    font-size:16px;color:var(--on-surface-var);pointer-events:none;line-height:1;
-  }
-  .cs-search{
-    width:100%;padding:10px 12px 10px 40px;border:1.5px solid var(--outline);border-radius:10px;
-    background:var(--surface-softer);color:var(--on-surface);font-family:'Inter',sans-serif;font-size:13px;
-    box-sizing:border-box;
-  }
-  .cs-search:focus{outline:none;border-color:var(--primary);}
-  .cs-options{max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;}
-  .cs-option{
-    padding:9px 12px;border-radius:9px;font-size:13px;font-weight:500;color:var(--on-surface);
-    cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    transition:background .12s ease,color .12s ease;
-    display:flex;align-items:center;justify-content:space-between;gap:8px;
-  }
-  .cs-option:hover{background:var(--primary-container);color:var(--primary);}
-  .cs-option.active{background:var(--primary);color:#fff;font-weight:600;}
-  .cs-option .material-symbols-outlined{font-size:16px;}
-  .cs-empty{padding:14px 10px;text-align:center;font-size:12.5px;color:var(--on-surface-var);}
-  .date-pick-btn{
-    position:absolute;right:6px;top:calc(50% + 9px);transform:translateY(-50%);
-    width:28px;height:28px;border-radius:8px;border:none;cursor:pointer;
-    background:var(--primary-container);color:var(--primary);
-    display:flex;align-items:center;justify-content:center;padding:0;
-    transition:background .15s ease, transform .12s ease;
-  }
-  .date-pick-btn .material-symbols-outlined{font-size:16px;}
-  .date-pick-btn:hover{background:var(--primary);color:#fff;}
-  .date-pick-btn:active{transform:translateY(-50%) scale(.9);}
-  #dateFrom::-webkit-calendar-picker-indicator, #dateTo::-webkit-calendar-picker-indicator{opacity:0;position:absolute;right:0;top:0;width:42px;height:100%;margin:0;}
+  .wrap{max-width:1400px;margin:0 auto;padding:36px 48px 110px;}
 
   /* BUTTONS */
   .btn{
     display:inline-flex;align-items:center;gap:6px;
-    font-family:'Inter',sans-serif;font-weight:600;font-size:13.5px;
+    font-family:'Roboto',sans-serif;font-weight:500;font-size:13.5px;
     padding:10px 20px;border-radius:100px;border:none;cursor:pointer;
     transition:box-shadow .15s ease, background .15s ease, transform .1s ease;
   }
   .btn-filled{
-    background:var(--primary);
+    background:linear-gradient(160deg, var(--secondary) 0%, #0B7A70 100%);
     color:#fff;
-    box-shadow:0 8px 18px rgba(47,111,237,.28);
+    box-shadow:0 1px 0 rgba(255,255,255,.35) inset, 0 8px 20px rgba(13,148,136,.42);
   }
-  .btn-filled:hover{background:var(--primary-dark);transform:translateY(-1px);}
+  .btn-filled:hover{box-shadow:0 1px 0 rgba(255,255,255,.4) inset, 0 10px 26px rgba(13,148,136,.5);transform:translateY(-1px);}
   .btn-filled:active{transform:translateY(0);box-shadow:var(--elev-press);}
-  .btn-text{background:var(--surface-soft);color:var(--on-surface);border:1px solid var(--outline);}
-  .btn-text:hover{background:var(--primary-container);color:var(--primary);}
+  .btn-text{background:rgba(255,255,255,.45);color:var(--primary-dark);border:1px solid var(--glass-border);backdrop-filter:blur(6px);box-shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 3px 10px rgba(11,33,89,.08);}
+  .btn-text:hover{background:rgba(255,255,255,.72);transform:translateY(-1px);}
   .btn-gold{
-    background:var(--gold);
-    color:#1B2233;
-    box-shadow:0 8px 18px rgba(245,166,35,.3);
+    background:linear-gradient(160deg, #D6A85B 0%, var(--gold) 55%, var(--gold-dark) 100%);
+    color:#fff;
+    box-shadow:0 1px 0 rgba(255,255,255,.4) inset, 0 8px 20px rgba(143,100,35,.4);
   }
-  .btn-gold:hover{background:var(--gold-dark);transform:translateY(-1px);}
-  .btn-gold.active{background:var(--gold-dark);box-shadow:var(--elev-press);}
+  .btn-gold:hover{box-shadow:0 1px 0 rgba(255,255,255,.45) inset, 0 10px 26px rgba(143,100,35,.5);transform:translateY(-1px);}
+  .btn-gold.active{background:linear-gradient(160deg, #C7943F 0%, var(--gold-dark) 100%);box-shadow:var(--elev-press);}
   .btn:disabled{opacity:.5;cursor:default;}
 
-  /* CARDS — flat surface, soft shadow, no blur */
+  /* GLASS CARDS — layered for a raised, 3D feel */
   .card{
     position:relative;
-    background:var(--surface);
-    border:1px solid var(--outline);
+    background:var(--glass-bg);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border:1px solid var(--glass-border);
     border-radius:var(--radius-lg);
     box-shadow:var(--elev1);
     padding:22px 28px;
-    transition:box-shadow .2s ease, background .25s ease, border-color .25s ease;
+  }
+  .card::before{
+    content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    background:linear-gradient(165deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 22%);
   }
   .card-flush{padding:0;overflow:hidden;}
 
   #fileInput{display:none;}
+
+  /* SNACKBAR (errors only) */
+  .snackbar{
+    position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(120%);
+    background:var(--error);color:#fff;padding:13px 24px;border-radius:100px;
+    font-size:13px;box-shadow:0 10px 30px rgba(179,38,30,.35);display:flex;align-items:center;gap:10px;
+    transition:transform .3s ease;z-index:100;
+  }
+  .snackbar.show{transform:translateX(-50%) translateY(0);}
 
   /* EMPTY STATE — a quiet, premium placeholder rather than a flat grey box */
   .empty-state{
@@ -284,7 +164,8 @@
   }
   .empty-state .icon-badge{
     width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    background:var(--primary-container);
+    background:linear-gradient(155deg, rgba(30,58,138,.10), rgba(13,148,136,.10));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.7), inset 0 -2px 6px rgba(11,33,89,.06);
     margin-bottom:4px;
   }
   .empty-state .material-symbols-outlined{font-size:24px;color:var(--primary);opacity:.55;}
@@ -297,40 +178,48 @@
   }
   .kpi-card{
     position:relative;
-    background:var(--surface);
-    border:1px solid var(--outline);
+    background:linear-gradient(165deg, var(--glass-bg-strong) 0%, rgba(255,255,255,.55) 100%);
+    backdrop-filter:blur(18px) saturate(180%);
+    -webkit-backdrop-filter:blur(18px) saturate(180%);
+    border:1px solid var(--glass-border);
     border-radius:var(--radius-md);
     box-shadow:var(--elev1);
-    padding:15px 16px 13px;display:flex;flex-direction:column;gap:8px;
+    padding:13px 15px 11px;display:flex;flex-direction:column;gap:6px;
     min-width:0;overflow:hidden;
-    transition:box-shadow .18s ease, transform .18s ease, background .25s ease, border-color .25s ease;
+    transition:box-shadow .18s ease, transform .18s ease;
+  }
+  .kpi-card::after{
+    content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg, var(--primary-light), var(--gold));
   }
   .kpi-card:hover{box-shadow:var(--elev2);transform:translateY(-2px);}
   .kpi-card .icon-row{display:flex;justify-content:space-between;align-items:center;}
   .kpi-card .icon-row .material-symbols-outlined{
     color:var(--primary);background:var(--primary-container);
-    width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;
-    font-size:16px;
+    width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    font-size:15px;box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
   }
-  .kpi-label{font-size:10.5px;color:var(--on-surface-var);font-weight:600;letter-spacing:.02em;}
-  .kpi-value{font-size:19px;font-weight:700;font-family:'Roboto Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .2s ease;color:var(--on-surface);}
+  .kpi-label{font-size:10.5px;color:var(--on-surface-var);font-weight:500;letter-spacing:.02em;}
+  .kpi-value{font-size:19px;font-weight:700;font-family:'Roboto Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .2s ease;}
   .kpi-sub{font-size:10.5px;color:var(--on-surface-var);min-height:13px;}
-  .mover-card .kpi-value{font-family:'Inter',sans-serif;font-size:14.5px;}
+  .mover-card .kpi-value{font-family:'Roboto',sans-serif;font-size:14.5px;}
 
   /* MOVER SLIDER — manually step through rising/falling items */
+  .mover-up.kpi-card::after{background:linear-gradient(90deg, var(--error), #E8918B);}
+  .mover-down.kpi-card::after{background:linear-gradient(90deg, var(--success), #6FBE8F);}
   .mover-up .icon-row .material-symbols-outlined{color:var(--error);background:var(--error-container);}
   .mover-down .icon-row .material-symbols-outlined{color:var(--success);background:var(--success-container);}
   .mover-slider{display:flex;align-items:center;gap:6px;min-width:0;touch-action:pan-y;}
   .mover-content{flex:1;min-width:0;cursor:grab;user-select:none;}
   .mover-content:active{cursor:grabbing;}
   .mover-nav{
-    flex-shrink:0;width:20px;height:20px;border-radius:50%;border:1px solid var(--outline);cursor:pointer;padding:0;
-    background:var(--surface-soft);
-    display:flex;align-items:center;justify-content:center;color:var(--on-surface-var);
-    transition:background .15s ease, transform .1s ease, color .15s ease;
+    flex-shrink:0;width:20px;height:20px;border-radius:50%;border:none;cursor:pointer;padding:0;
+    background:rgba(255,255,255,.65);box-shadow:inset 0 1px 0 rgba(255,255,255,.7), 0 1px 4px rgba(11,33,89,.16);
+    display:flex;align-items:center;justify-content:center;color:var(--primary-dark);
+    transition:background .15s ease, transform .1s ease;
   }
   .mover-nav .material-symbols-outlined{font-size:15px !important;background:none !important;width:auto !important;height:auto !important;box-shadow:none !important;color:inherit !important;}
-  .mover-nav:hover:not(:disabled){background:var(--primary-container);color:var(--primary);}
+  .mover-nav:hover:not(:disabled){background:rgba(255,255,255,.95);}
   .mover-nav:active:not(:disabled){transform:scale(.88);}
   .mover-nav:disabled{opacity:.3;cursor:default;}
 
@@ -341,109 +230,50 @@
     margin-bottom:14px;flex-wrap:wrap;gap:10px;
   }
   .section-title{
-    font-size:16.5px;font-weight:700;letter-spacing:-0.01em;display:flex;align-items:center;gap:10px;color:var(--on-surface);
+    font-size:17px;font-weight:700;display:flex;align-items:center;gap:9px;
   }
-  .section-title .material-symbols-outlined{
-    color:var(--primary);background:var(--primary-container);
-    width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;
-  }
+  .section-title .material-symbols-outlined{color:var(--primary);}
   .section-desc{font-size:11.5px;color:var(--on-surface-var);}
 
   .four-col{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
 
   /* SEGMENTED TOGGLE */
-  .segmented{display:inline-flex;border:1px solid var(--outline);border-radius:100px;overflow:hidden;background:var(--surface-soft);}
+  .segmented{display:inline-flex;border:1.5px solid var(--primary);border-radius:100px;overflow:hidden;background:rgba(255,255,255,.4);backdrop-filter:blur(8px);box-shadow:inset 0 1px 3px rgba(11,33,89,.08);}
   .segmented button{
-    padding:9px 17px;font-size:12.5px;font-weight:600;border:none;background:transparent;
-    color:var(--on-surface-var);cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s ease,color .15s ease;
+    padding:9px 17px;font-size:12.5px;font-weight:500;border:none;background:transparent;
+    color:var(--primary-dark);cursor:pointer;font-family:'Roboto',sans-serif;transition:background .15s ease,color .15s ease;
   }
-  .segmented button.active{background:var(--primary);color:#fff;}
+  .segmented button + button{border-left:1.5px solid var(--primary);}
+  .segmented button.active{background:linear-gradient(160deg, var(--primary-light), var(--primary-dark));color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3);}
   .segmented.small button{padding:6px 13px;font-size:11.5px;}
 
-  /* FORM FIELDS — icon-prefixed pill inputs, premium SaaS look */
+  /* FORM FIELDS */
   .field{position:relative;}
   .field label{
-    display:block;font-size:11px;font-weight:600;color:var(--on-surface-var);
-    margin-bottom:6px;letter-spacing:.02em;text-transform:uppercase;
+    display:block;font-size:11px;font-weight:500;color:var(--on-surface-var);
+    margin-bottom:5px;letter-spacing:.02em;
   }
-  .field.icon-field{position:relative;}
-  .field.icon-field .field-icon{
-    position:absolute;left:14px;top:calc(50% + 9px);transform:translateY(-50%);
-    color:var(--primary);font-size:17px;pointer-events:none;z-index:1;
-  }
-  .field.icon-field select,
-  .field.icon-field input{padding-left:38px;}
   select, input[type=text], input[type=date]{
-    font-family:'Inter',sans-serif;font-size:13.5px;font-weight:500;padding:11px 14px;
-    border:1.5px solid var(--outline);background:var(--surface-softer);
-    color:var(--on-surface);border-radius:12px;min-width:170px;
-    transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
-    box-shadow:0 1px 2px rgba(20,30,60,.03);
-    appearance:none;-webkit-appearance:none;
+    font-family:'Roboto',sans-serif;font-size:13.5px;padding:10px 13px;
+    border:none;border-bottom:2px solid var(--outline);background:rgba(255,255,255,.55);
+    backdrop-filter:blur(6px);
+    color:var(--on-surface);border-radius:10px 10px 0 0;min-width:160px;
   }
-  select{
-    background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238A93A6' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat:no-repeat;background-position:right 12px center;background-size:15px;
-    padding-right:34px;
-  }
-  html[data-theme="dark"] select{
-    background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2398A2BE' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  }
-  select:hover, input[type=text]:hover, input[type=date]:hover{border-color:var(--primary-light);}
-  select:focus, input:focus{outline:none;border-color:var(--primary);background:var(--surface);box-shadow:0 0 0 4px var(--primary-container);}
-  select:focus{box-shadow:0 0 0 2px var(--primary-container);}
+  select:focus, input:focus{outline:none;border-bottom:2px solid var(--primary);background:rgba(255,255,255,.85);}
   select:disabled, input:disabled{opacity:.5;}
-
-  /* MODERN DATE INPUTS — custom calendar icon, roomier value, refined picker button */
-  input[type=date]{
-    position:relative;
-    letter-spacing:.01em;
-    font-variant-numeric:tabular-nums;
-    color-scheme: light;
-  }
-  html[data-theme="dark"] input[type=date]{color-scheme: dark;}
-  input[type=date]::-webkit-calendar-picker-indicator{
-    background:transparent;
-    color:transparent;
-    cursor:pointer;
-    width:22px;height:22px;
-    margin-left:6px;
-    position:relative;
-    opacity:1;
-    filter: invert(46%) sepia(53%) saturate(2018%) hue-rotate(202deg) brightness(97%) contrast(93%);
-    transition:transform .15s ease;
-  }
-  input[type=date]:hover::-webkit-calendar-picker-indicator{transform:scale(1.12);}
-  html[data-theme="dark"] input[type=date]::-webkit-calendar-picker-indicator{
-    filter: invert(74%) sepia(21%) saturate(1934%) hue-rotate(191deg) brightness(101%) contrast(96%);
-  }
-  input[type=date]::-webkit-datetime-edit{padding:0 2px;}
-  input[type=date]::-webkit-datetime-edit-fields-wrapper{padding:0;}
-  input[type=date]::-webkit-inner-spin-button{display:none;}
 
   /* TABLES */
   table{width:100%;border-collapse:collapse;font-size:12.8px;}
   thead th{
     text-align:left;font-size:11px;font-weight:700;color:var(--on-surface-var);
-    padding:13px 16px;background:var(--table-head-bg);position:sticky;top:0;
-    border-bottom:1px solid var(--outline);
+    padding:13px 16px;background:rgba(255,255,255,.45);position:sticky;top:0;
+    border-bottom:2px solid var(--outline);backdrop-filter:blur(10px);
   }
-  tbody td{padding:12px 16px;border-bottom:1px solid var(--outline-soft);}
+  tbody td{padding:10px 16px;border-bottom:1px solid var(--outline-soft);}
   tbody tr{transition:background .12s;}
-  tbody tr:hover{background:var(--table-head-bg);}
+  tbody tr:hover{background:rgba(255,255,255,.4);}
   .num{text-align:right;font-family:'Roboto Mono',monospace;}
   .table-scroll{max-height:460px;overflow-y:auto;}
-  tfoot td, tfoot th{
-    padding:13px 16px;font-weight:700;color:var(--on-surface);
-    background:var(--table-head-bg);position:sticky;bottom:0;
-    border-top:2px solid var(--outline);
-  }
-  #priceCompareTable th.sticky-col, #priceCompareTable td.sticky-col{
-    position:sticky;left:0;background:var(--surface);z-index:2;
-    box-shadow:2px 0 4px rgba(20,30,60,.05);
-  }
-  #priceCompareTable thead th.sticky-col{background:var(--table-head-bg);z-index:3;}
-  #priceCompareTable tfoot td.sticky-col{background:var(--table-head-bg);z-index:3;}
 
   .cell-datecell{display:flex;flex-direction:column;gap:1px;}
   .cell-date{font-size:11.5px;font-weight:600;color:var(--on-surface);}
@@ -452,11 +282,12 @@
   /* CHIPS */
   .chip{
     display:inline-flex;align-items:center;gap:4px;padding:4px 11px;border-radius:100px;
-    font-size:11px;font-weight:700;font-family:'Roboto Mono',monospace;
+    font-size:11px;font-weight:600;font-family:'Roboto Mono',monospace;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.5);
   }
   .chip.up{background:var(--error-container);color:var(--error);}
   .chip.down{background:var(--success-container);color:var(--success);}
-  .chip.flat{background:var(--outline-soft);color:var(--on-surface-var);}
+  .chip.flat{background:rgba(255,255,255,.5);color:var(--on-surface-var);}
 
   /* Last purchase note under Day Total Purchase */
   .last-purchase-note{
@@ -493,10 +324,6 @@
   <div class="appbar-meta">
     <span><span class="material-symbols-outlined" style="font-size:16px;">calendar_today</span><span id="meta-range">No data loaded</span></span>
     <span id="userBadge" style="display:none;"><span class="material-symbols-outlined" style="font-size:16px;">person</span><span id="userBadgeName"></span></span>
-    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">
-      <span class="material-symbols-outlined icon-moon">dark_mode</span>
-      <span class="material-symbols-outlined icon-sun">light_mode</span>
-    </button>
     <a href="/admin" id="adminLinkBtn" class="icon-btn" title="Admin panel" aria-label="Admin panel" style="display:none;text-decoration:none;">
       <span class="material-symbols-outlined">admin_panel_settings</span>
     </a>
@@ -533,88 +360,17 @@
 
 <div class="wrap">
 
-  <!-- ITEM / SUPPLIER / DATE FILTERS — placed above the summary so scope is set first -->
-  <div class="section" id="filterBar" style="margin-bottom:22px;">
+  <!-- ITEM / SUPPLIER FILTERS — placed above the summary so scope is set first -->
+  <div class="section" style="margin-bottom:22px;">
     <div class="card" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:18px;">
-      <div style="display:flex;gap:16px;flex-wrap:wrap;">
-        <div class="field date-range-field">
-          <label>Month</label>
-          <button type="button" class="date-range-trigger" id="filterMonthTrigger" disabled>
-            <span class="material-symbols-outlined" style="font-size:17px;">calendar_month</span>
-            <span id="filterMonthLabel">All months</span>
-            <span class="material-symbols-outlined date-range-chevron">expand_more</span>
-          </button>
-          <div class="date-range-panel cs-panel" id="filterMonthPanel">
-            <div class="cs-options" id="filterMonthOptions"></div>
-          </div>
-        </div>
-        <div class="field date-range-field">
+      <div style="display:flex;gap:18px;flex-wrap:wrap;">
+        <div class="field">
           <label>Item</label>
-          <button type="button" class="date-range-trigger" id="filterItemTrigger" disabled>
-            <span class="material-symbols-outlined" style="font-size:17px;">inventory_2</span>
-            <span id="filterItemLabel">All items</span>
-            <span class="material-symbols-outlined date-range-chevron">expand_more</span>
-          </button>
-          <div class="date-range-panel cs-panel" id="filterItemPanel">
-            <div class="cs-search-wrap">
-              <span class="material-symbols-outlined">search</span>
-              <input type="text" class="cs-search" id="filterItemSearch" placeholder="Search items…">
-            </div>
-            <div class="cs-options" id="filterItemOptions"></div>
-          </div>
+          <select id="filterItem" disabled><option value="">All items</option></select>
         </div>
-        <div class="field date-range-field">
+        <div class="field">
           <label>Supplier</label>
-          <button type="button" class="date-range-trigger" id="filterSupplierTrigger" disabled>
-            <span class="material-symbols-outlined" style="font-size:17px;">local_shipping</span>
-            <span id="filterSupplierLabel">All suppliers</span>
-            <span class="material-symbols-outlined date-range-chevron">expand_more</span>
-          </button>
-          <div class="date-range-panel cs-panel" id="filterSupplierPanel">
-            <div class="cs-search-wrap">
-              <span class="material-symbols-outlined">search</span>
-              <input type="text" class="cs-search" id="filterSupplierSearch" placeholder="Search suppliers…">
-            </div>
-            <div class="cs-options" id="filterSupplierOptions"></div>
-          </div>
-        </div>
-        <div class="field date-range-field">
-          <label>Date Range</label>
-          <button type="button" class="date-range-trigger" id="dateRangeTrigger" disabled>
-            <span class="material-symbols-outlined" style="font-size:17px;">event</span>
-            <span id="dateRangeLabel">All time</span>
-            <span class="material-symbols-outlined date-range-chevron">expand_more</span>
-          </button>
-          <div class="date-range-panel" id="dateRangePanel">
-            <div class="date-range-presets" id="dateRangePresets">
-              <button data-preset="all">All time</button>
-              <button data-preset="today">Today</button>
-              <button data-preset="7d">Last 7 days</button>
-              <button data-preset="30d">Last 30 days</button>
-              <button data-preset="thisMonth">This month</button>
-              <button data-preset="lastMonth">Last month</button>
-            </div>
-            <div class="date-range-divider"></div>
-            <div class="date-range-custom">
-              <div class="field icon-field">
-                <label>From</label>
-                <span class="material-symbols-outlined field-icon">event</span>
-                <input type="date" id="dateFrom">
-                <button type="button" class="date-pick-btn" data-target="dateFrom" aria-label="Open calendar">
-                  <span class="material-symbols-outlined">calendar_month</span>
-                </button>
-              </div>
-              <div class="field icon-field">
-                <label>To</label>
-                <span class="material-symbols-outlined field-icon">event</span>
-                <input type="date" id="dateTo">
-                <button type="button" class="date-pick-btn" data-target="dateTo" aria-label="Open calendar">
-                  <span class="material-symbols-outlined">calendar_month</span>
-                </button>
-              </div>
-              <button class="btn btn-filled" id="applyDateRange" style="width:100%;justify-content:center;margin-top:2px;">Apply</button>
-            </div>
-          </div>
+          <select id="filterSupplier" disabled><option value="">All suppliers</option></select>
         </div>
       </div>
       <button class="btn btn-text" id="resetFilters">
@@ -640,12 +396,28 @@
       </div>
     </div>
     <div class="card">
-      <div style="display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:16px;">
-        <div id="trendGrowth" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:16px;">
+        <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;">
+          <div class="field">
+            <label>From</label>
+            <input type="date" id="dateFrom" disabled>
+          </div>
+          <div class="field">
+            <label>To</label>
+            <input type="date" id="dateTo" disabled>
+          </div>
+          <button class="btn btn-text" id="resetDateRange" style="padding:8px 16px;">Reset range</button>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-gold" id="toggleGrowth">
+            <span class="material-symbols-outlined" style="font-size:17px;">insights</span>
+            <span id="toggleGrowthLabel">Show Growth</span>
+          </button>
+          <div id="trendGrowth" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+        </div>
       </div>
       <div id="trendChart" style="height:380px;"></div>
       <div class="section-desc" id="trendCapNote" style="margin-top:12px;"></div>
-
     </div>
   </div>
 
@@ -653,17 +425,9 @@
   <div class="section">
     <div class="section-head">
       <div class="section-title"><span class="material-symbols-outlined">today</span>Selected Day</div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
-        <div class="segmented small" id="daySortToggle">
-          <button class="active" data-sort="all">All</button>
-          <button data-sort="up">Rising</button>
-          <button data-sort="down">Falling</button>
-        </div>
-        <div class="field icon-field" style="min-width:170px;">
-          <label>Date</label>
-          <span class="material-symbols-outlined field-icon">event</span>
-          <input type="date" id="daySelect" disabled>
-        </div>
+      <div class="field" style="min-width:170px;">
+        <label>Date</label>
+        <input type="date" id="daySelect" disabled>
       </div>
     </div>
     <div class="card" style="padding-bottom:0;">
@@ -700,57 +464,17 @@
     </div>
   </div>
 
-  <!-- ITEM RATE VARIANCE CHART -->
+  <!-- RATE VARIANCE -->
   <div class="section">
     <div class="section-head">
-      <div class="section-title"><span class="material-symbols-outlined">show_chart</span>Item Rate Variance Chart</div>
-      <div class="section-desc">Uses the Item / Supplier / Month filters above</div>
-    </div>
-    <div class="card">
-      <div class="section-desc" id="itemRateChartNote" style="margin-bottom:10px;"></div>
-      <div id="itemRateChart" style="height:340px;"></div>
-    </div>
-  </div>
-
-  <!-- MONTHLY ITEM PRICE COMPARISON -->
-  <div class="section">
-    <div class="section-head">
-      <div class="section-title"><span class="material-symbols-outlined">grid_view</span>Monthly Item Price Comparison</div>
+      <div class="section-title"><span class="material-symbols-outlined">price_change</span>Rate Variance — Last 3 Purchases per Item</div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
-        <div class="field icon-field" style="min-width:190px;">
-          <span class="material-symbols-outlined field-icon" style="top:50%;">search</span>
-          <input type="text" id="priceCompareSearch" placeholder="Search item…" style="width:100%;" disabled>
-        </div>
-      </div>
-    </div>
-    <div class="section-desc" style="margin-bottom:12px;">Average rate per item, side by side across months. Ignores the Month filter above so all months stay visible; respects the Item and Supplier filters.</div>
-    <div class="card card-flush">
-      <div class="table-scroll" style="max-height:520px;overflow-x:auto;">
-        <table id="priceCompareTable">
-          <thead><tr id="priceCompareHeadRow"></tr></thead>
-          <tbody id="priceCompareBody"></tbody>
-          <tfoot><tr id="priceCompareTotalRow"></tr></tfoot>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- RATE VARIANCE (combined) -->
-  <div class="section">
-    <div class="section-head">
-      <div class="section-title"><span class="material-symbols-outlined">price_change</span>Rate Variance</div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
-        <div class="segmented small" id="rateViewToggle">
-          <button class="active" data-view="purchases">Last 3 Purchases</button>
-          <button data-view="months">Last 3 Months</button>
-        </div>
         <div class="segmented small" id="rateSortToggle">
           <button class="active" data-sort="all">All</button>
           <button data-sort="up">Rising</button>
           <button data-sort="down">Falling</button>
         </div>
-        <div class="field icon-field" style="min-width:190px;">
-          <span class="material-symbols-outlined field-icon" style="top:50%;">search</span>
+        <div class="field" style="min-width:190px;">
           <input type="text" id="rateSearch" placeholder="Search item…" style="width:100%;" disabled>
         </div>
       </div>
@@ -758,7 +482,7 @@
     <div class="card card-flush">
       <div class="table-scroll" style="max-height:460px;">
         <table>
-          <thead><tr id="rateVarianceHeadRow">
+          <thead><tr>
             <th>Item</th><th>UOM</th>
             <th class="num">Rate on Date</th><th class="num">Rate on Date</th><th class="num">Rate on Date (latest)</th>
             <th class="num">Net Variance</th><th>Trend</th>
@@ -774,6 +498,8 @@
     <span id="footerSource">No file uploaded yet</span>
   </footer>
 </div>
+
+<div class="snackbar" id="snackbar"><span class="material-symbols-outlined">error</span><span id="snackText"></span></div>
 
 <script>
 /* ---------- helpers ---------- */
@@ -792,15 +518,15 @@ const fmtShortDate = d => d.getDate() + ' ' + MONTHS_SHORT[d.getMonth()];
 const fmtYY = d => "'" + String(d.getFullYear()).slice(-2);
 
 function showSnack(text){
-  console.error(text);
+  const bar = document.getElementById('snackbar');
+  document.getElementById('snackText').textContent = text;
+  bar.classList.add('show');
+  clearTimeout(window._snackTimer);
+  window._snackTimer = setTimeout(()=>bar.classList.remove('show'), 3800);
 }
 
 function emptyCard(elId, icon, title, sub){
-  const el = document.getElementById(elId);
-  if(el.classList.contains('js-plotly-plot') && window.Plotly){
-    try{ Plotly.purge(el); }catch(e){}
-  }
-  el.innerHTML = `
+  document.getElementById(elId).innerHTML = `
     <div class="empty-state">
       <div class="icon-badge"><span class="material-symbols-outlined">${icon}</span></div>
       <div class="t1">${title}</div>
@@ -811,7 +537,7 @@ function emptyCard(elId, icon, title, sub){
 /* ---------- global dataset state ---------- */
 let RAW_DATA = [];
 let allDates = [], allItems = [], allSuppliers = [];
-let state = { item:'', supplier:'', month:'', period:'daily', dateFrom:'', dateTo:'', rateSort:'all', rateView:'purchases', daySort:'all', showGrowth:false, autoSlideMovers:true };
+let state = { item:'', supplier:'', period:'daily', dateFrom:'', dateTo:'', rateSort:'all', showGrowth:false, autoSlideMovers:true };
 let moversUp = [], moversDown = [], moversUpIdx = 0, moversDownIdx = 0, moversUpTimer = null, moversDownTimer = null;
 
 function loadDataset(records, sourceLabel){
@@ -824,21 +550,18 @@ function loadDataset(records, sourceLabel){
   document.getElementById('meta-range').textContent = allDates.length ? (allDates[0] + ' → ' + allDates[allDates.length-1]) : 'No data loaded';
   document.getElementById('footerSource').textContent = 'Source: ' + sourceLabel;
 
-  const allMonths = [...new Set(RAW_DATA.map(r=>r.date.slice(0,7)))].sort();
-  populateDropdown('filterMonth', allMonths, 'All months', monthLabel);
-  populateDropdown('filterItem', allItems, 'All items');
-  populateDropdown('filterSupplier', allSuppliers, 'All suppliers');
+  const itemSel = document.getElementById('filterItem');
+  const supSel = document.getElementById('filterSupplier');
+  itemSel.innerHTML = '<option value="">All items</option>' + allItems.map(i=>`<option value="${i}">${i}</option>`).join('');
+  supSel.innerHTML = '<option value="">All suppliers</option>' + allSuppliers.map(s=>`<option value="${s}">${s}</option>`).join('');
+  itemSel.disabled = false; supSel.disabled = false;
   document.getElementById('rateSearch').disabled = false;
-  document.getElementById('priceCompareSearch').disabled = false;
-  document.getElementById('dateRangeTrigger').disabled = false;
-  state.item=''; state.supplier=''; state.month=''; state.dateFrom=''; state.dateTo='';
-  setDropdownValue('filterMonth', '', 'All months');
-  setDropdownValue('filterItem', '', 'All items');
-  setDropdownValue('filterSupplier', '', 'All suppliers');
+  document.getElementById('dateFrom').disabled = false;
+  document.getElementById('dateTo').disabled = false;
+  state.item=''; state.supplier=''; state.dateFrom=''; state.dateTo='';
   document.getElementById('dateFrom').value=''; document.getElementById('dateTo').value='';
   document.getElementById('dateFrom').min = allDates[0]; document.getElementById('dateFrom').max = allDates[allDates.length-1];
   document.getElementById('dateTo').min = allDates[0]; document.getElementById('dateTo').max = allDates[allDates.length-1];
-  setDateRangePreset('all', {silent:true});
 
   const daySel = document.getElementById('daySelect');
   daySel.disabled = false;
@@ -853,205 +576,33 @@ function filteredData(){
   return RAW_DATA.filter(r =>
     (!state.item || r.item === state.item) &&
     (!state.supplier || r.supplier === state.supplier) &&
-    (!state.month || r.date.slice(0,7) === state.month) &&
     (!state.dateFrom || r.date >= state.dateFrom) &&
     (!state.dateTo || r.date <= state.dateTo)
   );
 }
 
-/* ---------- custom dropdown component (Month / Item / Supplier) ---------- */
-function setDropdownValue(key, value, labelText){
-  document.getElementById(key + 'Label').textContent = labelText;
-  document.querySelectorAll('#' + key + 'Options .cs-option').forEach(opt => {
-    opt.classList.toggle('active', opt.dataset.value === value);
-  });
-}
-function escapeHtml(s){
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-function populateDropdown(key, values, allLabel, labelFn){
-  const optionsEl = document.getElementById(key + 'Options');
-  const rows = [`<div class="cs-option active" data-value="">${escapeHtml(allLabel)}</div>`]
-    .concat(values.map(v => `<div class="cs-option" data-value="${escapeHtml(v)}">${escapeHtml(labelFn ? labelFn(v) : v)}</div>`));
-  optionsEl.innerHTML = rows.join('');
-  document.getElementById(key + 'Trigger').disabled = false;
-}
-function closeDropdown(key){
-  document.getElementById(key + 'Panel').classList.remove('open');
-  document.getElementById(key + 'Trigger').classList.remove('open');
-}
-function setupDropdown(key, stateKey, allLabel, onSelect){
-  const trigger = document.getElementById(key + 'Trigger');
-  const panel = document.getElementById(key + 'Panel');
-  const optionsEl = document.getElementById(key + 'Options');
-  const searchEl = document.getElementById(key + 'Search');
-
-  trigger.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const willOpen = !panel.classList.contains('open');
-    // close any other open dropdown first
-    document.querySelectorAll('.date-range-panel.open').forEach(p => { if(p !== panel){ p.classList.remove('open'); } });
-    document.querySelectorAll('.date-range-trigger.open').forEach(t => { if(t !== trigger){ t.classList.remove('open'); } });
-    panel.classList.toggle('open', willOpen);
-    trigger.classList.toggle('open', willOpen);
-    if(willOpen && searchEl){ searchEl.value=''; optionsEl.querySelectorAll('.cs-option').forEach(o=>o.style.display=''); setTimeout(()=>searchEl.focus(), 30); }
-  });
-
-  optionsEl.addEventListener('click', (e) => {
-    const opt = e.target.closest('.cs-option');
-    if(!opt) return;
-    const value = opt.dataset.value;
-    state[stateKey] = value;
-    setDropdownValue(key, value, value ? opt.textContent : allLabel);
-    closeDropdown(key);
-    if(onSelect) onSelect(value);
-    renderAll();
-  });
-
-  if(searchEl){
-    searchEl.addEventListener('click', e => e.stopPropagation());
-    searchEl.addEventListener('input', () => {
-      const q = searchEl.value.trim().toLowerCase();
-      optionsEl.querySelectorAll('.cs-option').forEach(opt => {
-        const match = !q || opt.textContent.toLowerCase().includes(q) || opt.dataset.value === '';
-        opt.style.display = match ? '' : 'none';
-      });
-    });
-  }
-
-  document.addEventListener('click', (e) => {
-    if(panel.classList.contains('open') && !panel.contains(e.target) && e.target !== trigger && !trigger.contains(e.target)){
-      closeDropdown(key);
-    }
-  });
-}
-setupDropdown('filterItem', 'item', 'All items');
-setupDropdown('filterSupplier', 'supplier', 'All suppliers');
-setupDropdown('filterMonth', 'month', 'All months', () => {
-  const scoped = filteredData();
-  const scopedDates = [...new Set(scoped.map(r=>r.date))].sort();
-  const daySel = document.getElementById('daySelect');
-  if(scopedDates.length){
-    daySel.min = scopedDates[0]; daySel.max = scopedDates[scopedDates.length-1];
-    daySel.value = scopedDates[scopedDates.length-1];
-  }
-});
-
+document.getElementById('filterItem').addEventListener('change', e => { state.item = e.target.value; renderAll(); });
+document.getElementById('filterSupplier').addEventListener('change', e => { state.supplier = e.target.value; renderAll(); });
 document.getElementById('resetFilters').addEventListener('click', () => {
-  state.item=''; state.supplier=''; state.month='';
-  setDropdownValue('filterItem', '', 'All items');
-  setDropdownValue('filterSupplier', '', 'All suppliers');
-  setDropdownValue('filterMonth', '', 'All months');
-  if(allDates.length){
-    const daySel = document.getElementById('daySelect');
-    daySel.min = allDates[0]; daySel.max = allDates[allDates.length-1];
-    daySel.value = allDates[allDates.length-1];
-  }
-  setDateRangePreset('all');
-});
-
-/* ---------- date range dropdown: presets + custom range ---------- */
-function ymd(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
-function addDaysStr(dateStr, n){
-  const d = new Date(dateStr + 'T00:00:00');
-  d.setDate(d.getDate() + n);
-  return ymd(d);
-}
-function updateDateRangeLabel(){
-  const label = document.getElementById('dateRangeLabel');
-  if(!state.dateFrom && !state.dateTo){ label.textContent = 'All time'; return; }
-  if(state.dateFrom && state.dateTo){
-    label.textContent = state.dateFrom === state.dateTo ? state.dateFrom : (state.dateFrom + ' → ' + state.dateTo);
-  } else if(state.dateFrom){
-    label.textContent = 'From ' + state.dateFrom;
-  } else {
-    label.textContent = 'Until ' + state.dateTo;
-  }
-}
-function setDateRangePreset(preset, opts){
-  opts = opts || {};
-  const anchor = allDates.length ? allDates[allDates.length-1] : ymd(new Date());
-  let from = '', to = '';
-  if(preset === 'today'){ from = anchor; to = anchor; }
-  else if(preset === '7d'){ from = addDaysStr(anchor, -6); to = anchor; }
-  else if(preset === '30d'){ from = addDaysStr(anchor, -29); to = anchor; }
-  else if(preset === 'thisMonth'){ from = anchor.slice(0,8) + '01'; to = anchor; }
-  else if(preset === 'lastMonth'){
-    const d = new Date(anchor + 'T00:00:00');
-    const firstOfThis = new Date(d.getFullYear(), d.getMonth(), 1);
-    const lastOfPrev = new Date(firstOfThis.getFullYear(), firstOfThis.getMonth(), 0);
-    const firstOfPrev = new Date(lastOfPrev.getFullYear(), lastOfPrev.getMonth(), 1);
-    from = ymd(firstOfPrev); to = ymd(lastOfPrev);
-  }
-  // preset === 'all' leaves from/to empty
-  state.dateFrom = from; state.dateTo = to;
-  document.getElementById('dateFrom').value = from;
-  document.getElementById('dateTo').value = to;
-  document.querySelectorAll('#dateRangePresets button').forEach(b => b.classList.toggle('active', b.dataset.preset === preset));
-  updateDateRangeLabel();
-  document.getElementById('dateRangePanel').classList.remove('open');
-  document.getElementById('dateRangeTrigger').classList.remove('open');
-  if(!opts.silent) renderAll();
-}
-document.querySelectorAll('#dateRangePresets button').forEach(btn => {
-  btn.addEventListener('click', () => setDateRangePreset(btn.dataset.preset));
-});
-document.getElementById('applyDateRange').addEventListener('click', () => {
-  state.dateFrom = document.getElementById('dateFrom').value;
-  state.dateTo = document.getElementById('dateTo').value;
-  document.querySelectorAll('#dateRangePresets button').forEach(b => b.classList.remove('active'));
-  updateDateRangeLabel();
-  document.getElementById('dateRangePanel').classList.remove('open');
-  document.getElementById('dateRangeTrigger').classList.remove('open');
+  state.item=''; state.supplier='';
+  document.getElementById('filterItem').value='';
+  document.getElementById('filterSupplier').value='';
   renderAll();
 });
-document.querySelectorAll('.date-pick-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const input = document.getElementById(btn.dataset.target);
-    if(input.showPicker){ try{ input.showPicker(); }catch(err){ input.focus(); } }
-    else { input.focus(); input.click(); }
-  });
+document.getElementById('dateFrom').addEventListener('change', e => { state.dateFrom = e.target.value; renderAll(); });
+document.getElementById('dateTo').addEventListener('change', e => { state.dateTo = e.target.value; renderAll(); });
+document.getElementById('resetDateRange').addEventListener('click', () => {
+  state.dateFrom=''; state.dateTo='';
+  document.getElementById('dateFrom').value='';
+  document.getElementById('dateTo').value='';
+  renderAll();
 });
-const dateRangeTrigger = document.getElementById('dateRangeTrigger');
-const dateRangePanel = document.getElementById('dateRangePanel');
-dateRangeTrigger.addEventListener('click', (e) => {
-  e.stopPropagation();
-  const willOpen = !dateRangePanel.classList.contains('open');
-  dateRangePanel.classList.toggle('open', willOpen);
-  dateRangeTrigger.classList.toggle('open', willOpen);
-});
-document.addEventListener('click', (e) => {
-  if(dateRangePanel.classList.contains('open') && !dateRangePanel.contains(e.target) && e.target !== dateRangeTrigger && !dateRangeTrigger.contains(e.target)){
-    dateRangePanel.classList.remove('open');
-    dateRangeTrigger.classList.remove('open');
-  }
-});
-
-/* ---------- sticky filter bar offset (sits just below the app bar) ---------- */
-function positionFilterBar(){
-  const appbar = document.querySelector('.appbar');
-  const filterBar = document.getElementById('filterBar');
-  if(appbar && filterBar) filterBar.style.top = appbar.offsetHeight + 'px';
-}
-window.addEventListener('resize', positionFilterBar);
-window.addEventListener('load', positionFilterBar);
-positionFilterBar();
-
 document.querySelectorAll('#rateSortToggle button').forEach(btn=>{
   btn.addEventListener('click', () => {
     document.querySelectorAll('#rateSortToggle button').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     state.rateSort = btn.dataset.sort;
-    renderRateVarianceSection();
-  });
-});
-document.querySelectorAll('#rateViewToggle button').forEach(btn=>{
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#rateViewToggle button').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    state.rateView = btn.dataset.view;
-    renderRateVarianceSection();
+    renderRateTable(document.getElementById('rateSearch').value);
   });
 });
 
@@ -1060,7 +611,6 @@ function computeMovers(){
   const byItem = new Map();
   RAW_DATA.forEach(r => {
     if(state.supplier && r.supplier !== state.supplier) return;
-    if(state.month && r.date.slice(0,7) !== state.month) return;
     if(!byItem.has(r.item)) byItem.set(r.item, []);
     byItem.get(r.item).push(r);
   });
@@ -1175,7 +725,7 @@ function renderKPIs(){
   const days = new Set(d.map(r=>r.date)).size;
   const suppliers = new Set(d.map(r=>r.supplier)).size;
   const items = new Set(d.map(r=>r.item)).size;
-  const avgPerPurchase = d.length ? total/d.length : 0;
+  const avgDaily = days ? total/days : 0;
   const has = RAW_DATA.length > 0;
 
   document.getElementById('kpiGrid').innerHTML = `
@@ -1185,9 +735,9 @@ function renderKPIs(){
       <div class="kpi-sub">${has?'across filtered records':'no data'}</div>
     </div>
     <div class="kpi-card">
-      <div class="icon-row"><div class="kpi-label">Avg Value Per Purchase</div><span class="material-symbols-outlined">calendar_month</span></div>
-      <div class="kpi-value">${has?fmtMoney(avgPerPurchase):'—'}</div>
-      <div class="kpi-sub"></div>
+      <div class="icon-row"><div class="kpi-label">Avg Daily Purchase</div><span class="material-symbols-outlined">calendar_month</span></div>
+      <div class="kpi-value">${has?fmtMoney(avgDaily):'—'}</div>
+      <div class="kpi-sub">${has?days+' active day(s)':'no data'}</div>
     </div>
     <div class="kpi-card">
       <div class="icon-row"><div class="kpi-label">Order Lines</div><span class="material-symbols-outlined">receipt_long</span></div>
@@ -1299,20 +849,13 @@ function updateGrowthBadges(valPct, qtyPct){
 
 function setShowGrowth(val){
   state.showGrowth = val;
+  document.getElementById('toggleGrowth').classList.toggle('active', val);
+  document.getElementById('toggleGrowthLabel').textContent = val ? 'Hide Growth' : 'Show Growth';
   document.getElementById('settingShowGrowth').checked = val;
   if(RAW_DATA.length) renderTrend();
 }
+document.getElementById('toggleGrowth').addEventListener('click', () => setShowGrowth(!state.showGrowth));
 document.getElementById('settingShowGrowth').addEventListener('change', e => setShowGrowth(e.target.checked));
-
-/* ---------- theme toggle ---------- */
-document.getElementById('themeToggle').addEventListener('click', () => {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const next = isDark ? 'light' : 'dark';
-  if(next === 'dark') document.documentElement.setAttribute('data-theme','dark');
-  else document.documentElement.removeAttribute('data-theme');
-  try{ localStorage.setItem('purchaseLedgerTheme', next); }catch(e){}
-  if(RAW_DATA.length){ renderTrend(); renderItemRateChart(); }
-});
 
 /* ---------- settings dropdown ---------- */
 const settingsBtn = document.getElementById('settingsBtn');
@@ -1346,22 +889,14 @@ function renderTrend(){
   updateGrowthBadges(growthValuePct, growthQtyPct);
   document.getElementById('trendCapNote').textContent = capped ? 'Showing the last 20 days · set a From/To date above for a custom range.' : '';
 
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const chartPrimary = isDark ? '#5B8DEF' : '#2F6FED';
-  const chartPrimaryDark = isDark ? '#7BA3F5' : '#1E4FC4';
-  const chartGold = isDark ? '#FFB84D' : '#F5A623';
-  const chartGoldDark = isDark ? '#FFC876' : '#C97F0C';
-  const chartAxisColor = isDark ? '#98A2BE' : '#8A93A6';
-  const chartGridColor = isDark ? 'rgba(255,255,255,.07)' : 'rgba(20,30,60,.06)';
-
   const annotations = !state.showGrowth ? [] : labels.map((lab, i) => {
     if(i===0 || !values[i-1]) return null;
     const pct = ((values[i]-values[i-1])/values[i-1])*100;
-    const bg = pct>0.05 ? (isDark?'rgba(241,120,111,.9)':'rgba(179,38,30,.85)') : (pct<-0.05 ? (isDark?'rgba(63,211,148,.9)':'rgba(22,106,62,.85)') : (isDark?'rgba(152,162,190,.85)':'rgba(88,98,121,.8)'));
+    const bg = pct>0.05 ? 'rgba(179,38,30,.85)' : (pct<-0.05 ? 'rgba(22,106,62,.85)' : 'rgba(88,98,121,.8)');
     return {
       x: lab, y: values[i]/2, xref:'x', yref:'y',
       text: fmtPct(pct), showarrow:false,
-      font:{size:10, color: isDark ? '#0A0E1A' : '#fff', family:'Roboto Mono'},
+      font:{size:10, color:'#fff', family:'Roboto Mono'},
       bgcolor:bg, borderpad:3, borderradius:4
     };
   }).filter(Boolean);
@@ -1372,21 +907,21 @@ function renderTrend(){
   Plotly.newPlot('trendChart', [
     {
       x: labels, y: values, type:'bar', name:'Value (৳)',
-      marker:{color:chartPrimary, line:{color:chartPrimaryDark, width:.5}}, yaxis:'y1',
+      marker:{color:'#2748A8', line:{color:'#0B2159', width:.5}}, yaxis:'y1',
       text: values.map(v=>fmtMoneyShort(v)), textposition:'outside',
-      textfont:{size:10.5, color:chartPrimaryDark, family:'Roboto Mono'},
+      textfont:{size:10.5, color:'#0B2159', family:'Roboto Mono'},
       cliponaxis:false,
       hovertemplate:'%{x}<br>৳%{y:,.0f}<extra></extra>'
     },
     {
       x: labels, y: qty, type:'scatter', mode:'lines+markers', name:'Quantity',
-      line:{color:chartGold, width:2.5}, marker:{size:6, color:chartGoldDark}, yaxis:'y2',
+      line:{color:'#B8873A', width:2.5}, marker:{size:6, color:'#8F6423'}, yaxis:'y2',
       hovertemplate:'%{x}<br>%{y:,.1f} qty<extra></extra>'
     }
   ], {
     margin:{t:34,l:60,r:60,b:70},
-    font:{family:'Inter', size:11, color:chartAxisColor},
-    yaxis:{title:'Value (৳)', tickprefix:'৳', gridcolor:chartGridColor},
+    font:{family:'Roboto', size:11, color:'#4C6070'},
+    yaxis:{title:'Value (৳)', tickprefix:'৳', gridcolor:'rgba(13,71,161,.08)'},
     yaxis2:{title:'Quantity', overlaying:'y', side:'right', gridcolor:'transparent'},
     xaxis:{tickangle: labels.length>8 ? -30 : 0},
     legend:{orientation:'h', y:1.14, x:0},
@@ -1461,7 +996,7 @@ function renderDay(){
     growthEl.textContent = 'n/a'; growthSub.textContent = 'no earlier date';
   }
 
-  let rowData = d.map(r => {
+  const rowData = d.map(r => {
     const prev = prevPurchaseForItem(r.item, r._d);
     let pct = null, cls = 'flat';
     if(prev && prev.rate !== null && prev.rate !== 0){
@@ -1476,8 +1011,6 @@ function renderDay(){
     return Math.abs(b.pct||0) - Math.abs(a.pct||0);
   });
 
-  if(state.daySort !== 'all') rowData = rowData.filter(row => row.cls === state.daySort);
-
   const rows = rowData.map(({r, prev, pct, cls}) => {
     const variance = pct===null ? '<span class="chip flat">first record</span>' : `<span class="chip ${cls}">${fmtPct(pct)}</span>`;
     const lastPurchaseCell = prev
@@ -1491,22 +1024,11 @@ function renderDay(){
       <td class="num">${variance}</td>
     </tr>`;
   }).join('');
-  const emptyMsg = state.daySort === 'up' ? 'No items with a rising rate on this day for current filters.'
-    : state.daySort === 'down' ? 'No items with a falling rate on this day for current filters.'
-    : 'No purchases on this day for current filters.';
-  document.getElementById('dayTableBody').innerHTML = rows || `<tr><td colspan="8" style="text-align:center;color:var(--on-surface-var);padding:24px;">${emptyMsg}</td></tr>`;
+  document.getElementById('dayTableBody').innerHTML = rows || '<tr><td colspan="8" style="text-align:center;color:var(--on-surface-var);padding:24px;">No purchases on this day for current filters.</td></tr>';
 }
 document.getElementById('daySelect').addEventListener('change', renderDay);
-document.querySelectorAll('#daySortToggle button').forEach(btn=>{
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#daySortToggle button').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    state.daySort = btn.dataset.sort;
-    renderDay();
-  });
-});
 
-/* ---------- rate variance (combined): Last 3 Purchases / Last 3 Months ---------- */
+/* ---------- rate variance table: rising/falling filter + movers-first sort ---------- */
 function renderRateTable(filterText){
   const has = RAW_DATA.length > 0;
   if(!has){
@@ -1515,7 +1037,6 @@ function renderRateTable(filterText){
   }
   const byItem = new Map();
   RAW_DATA.forEach(r => {
-    if(state.month && r.date.slice(0,7) !== state.month) return;
     if(!byItem.has(r.item)) byItem.set(r.item, []);
     byItem.get(r.item).push(r);
   });
@@ -1561,264 +1082,14 @@ function renderRateTable(filterText){
 
   document.getElementById('rateTableBody').innerHTML = rows || '<tr><td colspan="7" style="text-align:center;color:var(--on-surface-var);padding:24px;">No items match this filter.</td></tr>';
 }
-
-function monthKey(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
-function monthLabel(key){
-  const [y,m] = key.split('-').map(Number);
-  return MONTHS_SHORT[m-1] + " '" + String(y).slice(-2);
-}
-
-function renderMonthRateTable(filterText){
-  const has = RAW_DATA.length > 0;
-  if(!has){
-    document.getElementById('rateTableBody').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="icon-badge"><span class="material-symbols-outlined">calendar_month</span></div><div class="t1">No data</div><div class="t2">Upload an Excel file via Settings to see month-to-month rate variance.</div></div></td></tr>';
-    return;
-  }
-
-  let data = RAW_DATA;
-  if(state.supplier) data = data.filter(r => r.supplier === state.supplier);
-  if(state.month) data = data.filter(r => r.date.slice(0,7) === state.month);
-
-  const byItem = new Map();
-  data.forEach(r => {
-    if(!byItem.has(r.item)) byItem.set(r.item, []);
-    byItem.get(r.item).push(r);
-  });
-
-  let items = [...byItem.keys()].sort();
-  if(filterText) items = items.filter(i => i.toLowerCase().includes(filterText.toLowerCase()));
-
-  let rowData = items.map(item => {
-    const recs = byItem.get(item);
-    const byMonth = new Map();
-    recs.forEach(r => {
-      const key = monthKey(r._d);
-      if(!byMonth.has(key)) byMonth.set(key, { qty:0, amount:0, uom:r.uom, count:0 });
-      const m = byMonth.get(key);
-      m.qty += (r.qty || 0);
-      m.amount += (r.amount || 0);
-      m.count += 1;
-      m.uom = r.uom || m.uom;
-    });
-    const monthKeys = [...byMonth.keys()].sort();
-    const last3Keys = monthKeys.slice(-3);
-    if(last3Keys.length < 2) return null;
-
-    const months = last3Keys.map(key => {
-      const m = byMonth.get(key);
-      const avgRate = m.qty > 0 ? (m.amount / m.qty) : null;
-      return { key, avgRate, uom: m.uom };
-    });
-
-    const validMonths = months.filter(m => m.avgRate !== null);
-    if(validMonths.length < 2) return null;
-    const first = validMonths[0].avgRate, last = validMonths[validMonths.length-1].avgRate;
-    const netPct = first ? ((last-first)/first)*100 : 0;
-    const cls = netPct>0.05?'up':(netPct<-0.05?'down':'flat');
-    return { item, uom: months[months.length-1].uom, months, netPct, cls };
-  }).filter(Boolean);
-
-  if(state.rateSort !== 'all') rowData = rowData.filter(r => r.cls === state.rateSort);
-
-  rowData.sort((a,b) => {
-    const aFlat = a.cls==='flat', bFlat = b.cls==='flat';
-    if(aFlat !== bFlat) return aFlat ? 1 : -1;
-    return Math.abs(b.netPct) - Math.abs(a.netPct);
-  });
-
-  const rows = rowData.map(({item, uom, months, netPct, cls}) => {
-    const padded = [null,null,null].map((_,i) => months[i - (3-months.length)] || null);
-    const cells = padded.map(m => {
-      return m && m.avgRate !== null
-        ? `<div class="cell-datecell"><span class="cell-date">${monthLabel(m.key)}</span><span class="cell-rate">৳${fmtNum(m.avgRate)}</span></div>`
-        : '<span style="color:var(--on-surface-var);">—</span>';
-    });
-    const trendArrow = netPct>0.05 ? '↑ rising' : (netPct<-0.05 ? '↓ falling' : '→ stable');
-    const trendColor = netPct>0.05?'var(--error)':(netPct<-0.05?'var(--success)':'var(--on-surface-var)');
-    return `<tr>
-      <td>${item}</td><td>${uom}</td>
-      <td class="num">${cells[0]}</td><td class="num">${cells[1]}</td><td class="num">${cells[2]}</td>
-      <td class="num"><span class="chip ${cls}">${fmtPct(netPct)}</span></td>
-      <td style="color:${trendColor};font-size:12px;font-weight:500;">${trendArrow}</td>
-    </tr>`;
-  }).join('');
-
-  document.getElementById('rateTableBody').innerHTML = rows || '<tr><td colspan="7" style="text-align:center;color:var(--on-surface-var);padding:24px;">No items match this filter, or not enough months of data yet.</td></tr>';
-}
-
-function renderRateVarianceSection(){
-  const headRow = document.getElementById('rateVarianceHeadRow');
-  const searchVal = document.getElementById('rateSearch').value;
-  if(state.rateView === 'months'){
-    headRow.innerHTML = '<th>Item</th><th>UOM</th><th class="num">Avg Rate (Month)</th><th class="num">Avg Rate (Month)</th><th class="num">Avg Rate (Latest Month)</th><th class="num">Net Variance</th><th>Trend</th>';
-    renderMonthRateTable(searchVal);
-  } else {
-    headRow.innerHTML = '<th>Item</th><th>UOM</th><th class="num">Rate on Date</th><th class="num">Rate on Date</th><th class="num">Rate on Date (latest)</th><th class="num">Net Variance</th><th>Trend</th>';
-    renderRateTable(searchVal);
-  }
-}
-document.getElementById('rateSearch').addEventListener('input', renderRateVarianceSection);
-
-/* ---------- monthly item price comparison: item x month pivot with totals row ---------- */
-function renderPriceCompareTable(filterText){
-  const headRow = document.getElementById('priceCompareHeadRow');
-  const body = document.getElementById('priceCompareBody');
-  const totalRow = document.getElementById('priceCompareTotalRow');
-
-  if(!RAW_DATA.length){
-    headRow.innerHTML = '';
-    totalRow.innerHTML = '';
-    body.innerHTML = '<tr><td><div class="empty-state"><div class="icon-badge"><span class="material-symbols-outlined">grid_view</span></div><div class="t1">No data</div><div class="t2">Upload an Excel file via Settings to see this report.</div></div></td></tr>';
-    return;
-  }
-
-  let data = RAW_DATA;
-  if(state.supplier) data = data.filter(r => r.supplier === state.supplier);
-  if(state.item) data = data.filter(r => r.item === state.item);
-
-  const allMonthsHere = [...new Set(data.map(r => r.date.slice(0,7)))].sort();
-  if(!allMonthsHere.length){
-    headRow.innerHTML = '';
-    totalRow.innerHTML = '';
-    body.innerHTML = '<tr><td><div class="empty-state"><div class="icon-badge"><span class="material-symbols-outlined">grid_view</span></div><div class="t1">No matching purchases</div><div class="t2">Try a different item or supplier filter.</div></div></td></tr>';
-    return;
-  }
-
-  const byItem = new Map();
-  data.forEach(r => {
-    if(!byItem.has(r.item)) byItem.set(r.item, new Map());
-    const monthMap = byItem.get(r.item);
-    const mk = r.date.slice(0,7);
-    if(!monthMap.has(mk)) monthMap.set(mk, { qty:0, amount:0 });
-    const m = monthMap.get(mk);
-    m.qty += (r.qty || 0);
-    m.amount += (r.amount || 0);
-  });
-
-  let items = [...byItem.keys()].sort();
-  if(filterText) items = items.filter(i => i.toLowerCase().includes(filterText.toLowerCase()));
-
-  headRow.innerHTML = '<th class="sticky-col">Item</th>' + allMonthsHere.map(mk => `<th class="num">${monthLabel(mk)}</th>`).join('');
-
-  const rows = items.map(item => {
-    const monthMap = byItem.get(item);
-    const cells = allMonthsHere.map(mk => {
-      const m = monthMap.get(mk);
-      if(!m || m.qty <= 0) return '<td class="num" style="color:var(--on-surface-var);">—</td>';
-      return `<td class="num">৳${fmtNum(m.amount / m.qty)}</td>`;
-    }).join('');
-    return `<tr><td class="sticky-col">${item}</td>${cells}</tr>`;
-  }).join('');
-  body.innerHTML = rows || '<tr><td><div class="empty-state"><div class="icon-badge"><span class="material-symbols-outlined">search_off</span></div><div class="t1">No items match this search</div></div></td></tr>';
-
-  const totals = allMonthsHere.map(mk => {
-    let sum = 0;
-    items.forEach(item => {
-      const m = byItem.get(item).get(mk);
-      if(m && m.qty > 0) sum += (m.amount / m.qty);
-    });
-    return sum;
-  });
-  totalRow.innerHTML = '<td class="sticky-col">Total</td>' + totals.map(t => `<td class="num">৳${fmtNum(t)}</td>`).join('');
-}
-document.getElementById('priceCompareSearch').addEventListener('input', e => renderPriceCompareTable(e.target.value));
-
-/* ---------- item rate variance chart: driven by the global Item/Supplier/Month filters ---------- */
-function renderItemRateChart(){
-  const chartEl = document.getElementById('itemRateChart');
-  const noteEl = document.getElementById('itemRateChartNote');
-  noteEl.textContent = '';
-
-  if(!RAW_DATA.length){
-    emptyCard('itemRateChart', 'show_chart', 'No data', 'Upload an Excel file via Settings to see this chart.');
-    return;
-  }
-  if(!state.item){
-    emptyCard('itemRateChart', 'touch_app', 'Select an item to begin', 'Choose an item from the filters above to see how its purchase rate has moved over time.');
-    return;
-  }
-  let recs = RAW_DATA.filter(r => r.item === state.item);
-  if(state.supplier) recs = recs.filter(r => r.supplier === state.supplier);
-  if(state.month) recs = recs.filter(r => r.date.slice(0,7) === state.month);
-  recs = recs.slice().sort((a,b)=>a._d-b._d);
-
-  if(recs.length < 2){
-    emptyCard('itemRateChart', 'show_chart', 'Not enough history', '"' + state.item + '" needs at least two purchases (with the current filters) to show a variance trend.');
-    return;
-  }
-
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const upColor = isDark ? '#F1786F' : '#E15B5B';
-  const downColor = isDark ? '#3FD394' : '#26B87A';
-  const lineColor = isDark ? '#5B8DEF' : '#2F6FED';
-  const fillColor = isDark ? 'rgba(91,141,239,.16)' : 'rgba(47,111,237,.10)';
-  const axisColor = isDark ? '#98A2BE' : '#8A93A6';
-  const gridColor = isDark ? 'rgba(255,255,255,.07)' : 'rgba(20,30,60,.06)';
-
-  const dates = recs.map(r => r.date);
-  const rates = recs.map(r => r.rate);
-  const pct = recs.map((r,i) => i===0 ? 0 : ((r.rate - recs[i-1].rate) / (recs[i-1].rate || 1)) * 100);
-  // Only mark points with an actual change — a dot for every near-zero point turns into unreadable clutter on long histories.
-  const changeIdx = pct.map((p,i) => i>0 && Math.abs(p) > 0.05 ? i : -1).filter(i => i>=0);
-  const markerX = changeIdx.map(i => dates[i]);
-  const markerY = changeIdx.map(i => pct[i]);
-  const markerColor = changeIdx.map(i => pct[i] > 0 ? upColor : downColor);
-  const markerText = changeIdx.map(i => fmtPct(pct[i]));
-
-  if(chartEl.classList.contains('js-plotly-plot') && window.Plotly){
-    try{ Plotly.purge(chartEl); }catch(e){}
-  }
-  chartEl.innerHTML = '';
-
-  // Cap the number of x-axis tick labels shown so dates don't overlap into unreadable clutter.
-  const maxTicks = 12;
-  const tickStep = Math.max(1, Math.ceil(dates.length / maxTicks));
-  const tickvals = dates.filter((_, i) => i % tickStep === 0);
-
-  Plotly.newPlot('itemRateChart', [
-    {
-      x: dates, y: pct, type:'scatter', mode:'lines', name:'Variance %', yaxis:'y1',
-      line:{color:lineColor, width:2, shape:'spline', smoothing:0.35},
-      fill:'tozeroy', fillcolor:fillColor,
-      hoverinfo:'skip'
-    },
-    {
-      x: markerX, y: markerY, type:'scatter', mode:'markers+text', name:'Rate change', yaxis:'y1',
-      marker:{size:9, color:markerColor, line:{color:isDark?'#0A0E1A':'#fff', width:2}},
-      text: markerText, textposition:'top center',
-      textfont:{size:10.5, color:axisColor, family:'Roboto Mono', weight:600},
-      hovertemplate:'%{x}<br>%{text}<extra></extra>'
-    },
-    {
-      x: dates, y: rates, type:'scatter', mode:'lines+markers', name:'Rate (৳)', yaxis:'y2',
-      line:{color:axisColor, width:1.5, dash:'dot'}, marker:{size:4, color:axisColor},
-      hovertemplate:'%{x}<br>৳%{y:,.2f}<extra></extra>'
-    }
-  ], {
-    margin:{t:20,l:55,r:55,b:60},
-    font:{family:'Inter', size:11, color:axisColor},
-    yaxis:{title:'Variance %', ticksuffix:'%', gridcolor:gridColor, zeroline:true, zerolinecolor:gridColor},
-    yaxis2:{title:'Rate (৳)', overlaying:'y', side:'right', gridcolor:'transparent'},
-    xaxis:{
-      tickangle: -35,
-      type:'category',
-      tickvals: tickvals,
-      automargin:true
-    },
-    legend:{orientation:'h', y:1.16, x:0},
-    hovermode:'closest',
-    plot_bgcolor:'rgba(255,255,255,0)', paper_bgcolor:'rgba(255,255,255,0)'
-  }, {displayModeBar:false, responsive:true});
-}
+document.getElementById('rateSearch').addEventListener('input', e => renderRateTable(e.target.value));
 
 /* ---------- render all ---------- */
 function renderAll(){
   renderKPIs();
   renderTrend();
   renderDay();
-  renderItemRateChart();
-  renderRateVarianceSection();
-  renderPriceCompareTable(document.getElementById('priceCompareSearch').value);
+  renderRateTable(document.getElementById('rateSearch').value);
 }
 window.addEventListener('resize', () => { if(RAW_DATA.length) renderTrend(); });
 
